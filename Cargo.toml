@@ -1,0 +1,15 @@
+[package]
+authors = ["Mark Simulacrum <mark.simulacrum@gmail.com>"]
+name = "advent-of-code"
+version = "0.1.0"
+
+[dependencies]
+failure = "0.1"
+
+[[bin]]
+name = "y2016"
+path = "src/bin/y2016/main.rs"
+bench = true
+
+[profile.release]
+debug = true
