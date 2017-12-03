@@ -29,11 +29,18 @@ impl Output {
         Ok(c(p.consume_number()? as u8))
     }
 
-    fn put(self, value: u8, bots: &mut BTreeMap<u8, Bot>, outputs: &mut BTreeMap<u8, u8>) {
+    fn put(self, value: u8, bots: &mut BTreeMap<u8, Bot>, outputs: &mut BTreeMap<u8, u8>) -> Option<u8> {
         match self {
-            Output::Bot(n) => bots.get_mut(&n).unwrap().chips.push(value),
+            Output::Bot(n) => {
+                let mut chips = &mut bots.get_mut(&n).unwrap().chips;
+                chips.push(value);
+                if chips.len() == 2 {
+                    return Some(n);
+                }
+            },
             Output::Output(n) => assert!(outputs.insert(n, value).is_none()),
         }
+        None
     }
 }
 
@@ -113,17 +120,13 @@ pub fn part1(s: &str) -> usize {
     let mut bots = get_bots(s);
     let mut outputs: BTreeMap<u8, u8> = BTreeMap::new();
 
-    loop {
-        let checked = bots.values()
+    let mut to_check = bots.values()
             .filter(|b| b.chips.len() == 2)
             .map(|b| b.number)
             .collect::<Vec<_>>();
-
-        if checked.is_empty() {
-            break;
-        }
-
-        for num in checked {
+    while !to_check.is_empty() {
+        let mut next = Vec::new();
+        for num in to_check {
             let mut chips = mem::replace(&mut bots.get_mut(&num).unwrap().chips, SmallVec::new());
             let (low, high) = {
                 let bot = &bots[&num];
@@ -133,9 +136,10 @@ pub fn part1(s: &str) -> usize {
             if chips == SmallVec::from_buf([17, 61]) {
                 return num as usize;
             }
-            low.put(chips[0], &mut bots, &mut outputs);
-            high.put(chips[1], &mut bots, &mut outputs);
+            next.extend(low.put(chips[0], &mut bots, &mut outputs));
+            next.extend(high.put(chips[1], &mut bots, &mut outputs));
         }
+        to_check = next;
     }
     panic!("unable to find bot")
 }
@@ -144,29 +148,36 @@ pub fn part2(s: &str) -> usize {
     let mut bots = get_bots(s);
     let mut outputs: BTreeMap<u8, u8> = BTreeMap::new();
 
-    loop {
-        let checked = bots.values()
+    let mut to_check = bots.values()
             .filter(|b| b.chips.len() == 2)
             .map(|b| b.number)
             .collect::<Vec<_>>();
-
-        if checked.is_empty() {
-            break;
-        }
-
-        for num in checked {
+    while !to_check.is_empty() {
+        let mut next = Vec::new();
+        for num in to_check {
             let mut chips = mem::replace(&mut bots.get_mut(&num).unwrap().chips, SmallVec::new());
             let (low, high) = {
                 let bot = &bots[&num];
                 (bot.low(), bot.high())
             };
             chips.sort();
-            low.put(chips[0], &mut bots, &mut outputs);
-            high.put(chips[1], &mut bots, &mut outputs);
+            next.extend(low.put(chips[0], &mut bots, &mut outputs));
+            next.extend(high.put(chips[1], &mut bots, &mut outputs));
         }
+        to_check = next;
     }
 
     (outputs[&0] as usize) * (outputs[&1] as usize) * (outputs[&2] as usize)
+}
+
+#[test]
+fn part1_real() {
+    assert_eq!(part1(INPUT), 118);
+}
+
+#[test]
+fn part2_real() {
+    assert_eq!(part2(INPUT), 143153);
 }
 
 pub const INPUT: &str = "
