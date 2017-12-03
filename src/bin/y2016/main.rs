@@ -2,12 +2,17 @@
 #![feature(option_filter)]
 #[cfg(test)]
 extern crate test;
+#[allow(unused_imports)]
 #[macro_use] extern crate failure;
-
-mod day09;
+extern crate advent_of_code;
+extern crate smallvec;
 
 macro_rules! gen {
     ($($day:ident),+) => {
+        $(
+            mod $day;
+        )+
+
         fn main() {
             let bench = std::env::var("BENCH").ok().map_or(false, |c| c == "1");
             if !bench {
@@ -49,4 +54,4 @@ macro_rules! gen {
     }
 }
 
-gen!(day09);
+gen!(day09, day10);
