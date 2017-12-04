@@ -86,10 +86,6 @@ pub fn part2(n: usize) -> usize {
             if strides_run == 2 {
                 stride += 1;
                 strides_run = 0;
-                let len = squares.len() as i64;
-                let from_end = (stride * 5) as i64;
-                let end = len - from_end;
-                let _ = squares.drain(0..(cmp::max(0, end) as usize));
             }
             strides_run += 1;
             last_step = last_step.spiral();
