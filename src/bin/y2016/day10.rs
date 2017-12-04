@@ -1,6 +1,5 @@
 use std::mem;
 use std::cmp;
-use std::collections::BTreeMap;
 
 use smallvec::SmallVec;
 
@@ -76,59 +75,40 @@ fn parse_input(s: &str) -> Vec<Instruction> {
 struct Bot {
     chips: SmallVec<[u8; 2]>,
     number: u8,
-    low: Option<Output>,
-    high: Option<Output>,
-}
-
-impl Bot {
-    fn new(num: u8) -> Bot {
-        Bot {
-            chips: SmallVec::new(),
-            number: num,
-            low: None,
-            high: None,
-        }
-    }
-
-    fn low(&self) -> Output {
-        self.low.unwrap()
-    }
-
-    fn high(&self) -> Output {
-        self.high.unwrap()
-    }
+    low: Output,
+    high: Output,
 }
 
 fn get_bots(s: &str) -> (Vec<Bot>, Vec<Option<u8>>) {
-    let mut bots = BTreeMap::new();
+    let mut bots = Vec::new();
     let mut outputs = 0;
+    let mut instructions = Vec::new();
     for instr in parse_input(s) {
         match instr {
             Instruction::State { bot, low, high } => {
-                let mut bot = bots.entry(bot as u8).or_insert_with(|| Bot::new(bot as u8));
-                assert_eq!(bot.low, None);
-                assert_eq!(bot.high, None);
+                bots.push(Bot {
+                    number: bot,
+                    chips: SmallVec::new(),
+                    low: low,
+                    high: high,
+                });
                 if let Output::Output(x) = low {
                     outputs = cmp::max(x, outputs);
                 }
                 if let Output::Output(x) = high {
                     outputs = cmp::max(x, outputs);
                 }
-                bot.low = Some(low);
-                bot.high = Some(high);
             }
             Instruction::ToBot { to, value } => {
-                let mut bot = bots.entry(to as u8).or_insert_with(|| Bot::new(to as u8));
-                bot.chips.push(value as u8);
+                instructions.push((to, value));
             }
         }
     }
-    let mut v = Vec::with_capacity(bots.len());
-    for (_, bot) in bots {
-        assert_eq!(v.len(), bot.number as usize);
-        v.push(bot);
+    bots.sort_by_key(|b| b.number);
+    for (to, value) in instructions {
+        bots[to as usize].chips.push(value);
     }
-    (v, vec![None; outputs as usize + 1])
+    (bots, vec![None; outputs as usize + 1])
 }
 
 pub fn part1(s: &str) -> usize {
@@ -143,7 +123,7 @@ pub fn part1(s: &str) -> usize {
         let mut chips = mem::replace(&mut bots[num].chips, SmallVec::new());
         let (low, high) = {
             let bot = &bots[num];
-            (bot.low(), bot.high())
+            (bot.low, bot.high)
         };
         chips.sort();
         if chips == SmallVec::from_buf([17, 61]) {
@@ -166,7 +146,7 @@ pub fn part2(s: &str) -> usize {
         let mut chips = mem::replace(&mut bots[num as usize].chips, SmallVec::new());
         let (low, high) = {
             let bot = &bots[num as usize];
-            (bot.low(), bot.high())
+            (bot.low, bot.high)
         };
         chips.sort();
         to_check.extend(low.put(chips[0], &mut bots, &mut outputs));
