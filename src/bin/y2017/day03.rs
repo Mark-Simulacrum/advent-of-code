@@ -8,31 +8,33 @@ enum Step {
     Down,
 }
 
+impl Step {
+    fn spiral(self) -> Step {
+        match self {
+            Step::Down => Step::Right,
+            Step::Right => Step::Up,
+            Step::Up => Step::Left,
+            Step::Left => Step::Down,
+        }
+    }
+}
+
 pub fn part1(n: usize) -> usize {
     let mut position = Position(0, 0);
     let mut i = 1;
-    let mut cur = 1;
     let mut strides_run = 0;
     let mut stride = 1;
     let mut last_step = Step::Down;
     while i != n {
-        if stride == cur {
-            cur = 0;
-            if strides_run == 2 {
-                stride += 1;
-                strides_run = 0;
-            }
-            strides_run += 1;
-            last_step = match last_step {
-                Step::Down => Step::Right,
-                Step::Right => Step::Up,
-                Step::Up => Step::Left,
-                Step::Left => Step::Down,
-            };
+        if strides_run == 2 {
+            stride += 1;
+            strides_run = 0;
         }
-        position = position.go(last_step);
-        cur += 1;
-        i += 1;
+        strides_run += 1;
+        last_step = last_step.spiral();
+        let go = cmp::min(n - i, stride);
+        position = position.go_n(last_step, go);
+        i += go;
     }
     (position.0.abs() + position.1.abs()) as usize
 }
@@ -41,14 +43,18 @@ pub fn part1(n: usize) -> usize {
 struct Position(i64, i64);
 
 impl Position {
-    fn go(mut self, step: Step) -> Self {
+    fn go_n(mut self, step: Step, n: usize) -> Self {
+        let n = n as i64;
         match step {
-            Step::Up => self.1 += 1,
-            Step::Down => self.1 -= 1,
-            Step::Right => self.0 += 1,
-            Step::Left => self.0 -= 1,
+            Step::Up => self.1 += n,
+            Step::Down => self.1 -= n,
+            Step::Right => self.0 += n,
+            Step::Left => self.0 -= n,
         }
         self
+    }
+    fn go(self, step: Step) -> Self {
+        self.go_n(step, 1)
     }
 }
 
@@ -86,12 +92,7 @@ pub fn part2(n: usize) -> usize {
                 let _ = squares.drain(0..(cmp::max(0, end) as usize));
             }
             strides_run += 1;
-            last_step = match last_step {
-                Step::Down => Step::Right,
-                Step::Right => Step::Up,
-                Step::Up => Step::Left,
-                Step::Left => Step::Down,
-            };
+            last_step = last_step.spiral();
         }
         position = position.go(last_step);
         cur += 1;
@@ -120,6 +121,11 @@ fn part1_4() {
 }
 
 #[test]
+fn part1_actual() {
+    assert_eq!(part1(INPUT), 552);
+}
+
+#[test]
 fn part2_1() {
     assert_eq!(part2(1), 2);
 }
@@ -142,6 +148,11 @@ fn part2_4() {
 #[test]
 fn part2_5() {
     assert_eq!(part2(23), 25);
+}
+
+#[test]
+fn part2_actual() {
+    assert_eq!(part2(INPUT), 330785);
 }
 
 pub const INPUT: usize = 325489;
