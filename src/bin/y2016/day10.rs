@@ -68,7 +68,7 @@ fn parse_input(s: &str) -> Vec<Instruction> {
             } else {
                 panic!("unexpected line: {}", line);
             }
-        }).collect::<Result<_, ::failure::Error>>().unwrap()
+        }).collect::<Result<_, ParserError>>().unwrap()
 }
 
 #[derive(Debug)]
