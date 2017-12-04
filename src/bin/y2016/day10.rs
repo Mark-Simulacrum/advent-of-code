@@ -49,27 +49,27 @@ impl Output {
 
 fn parse_input(s: &str) -> Vec<Instruction> {
     s.lines()
-    .filter(|line| {
-        !line.is_empty()
-    })
-    .map(|line| {
-        let mut p = Parser::new(line.as_bytes());
-        if p.expect(b"value ")? {
-            let value = p.consume_number()? as u8;
-            let _ = p.consume_bytes(" goes to bot ".len())?;
-            let to = p.consume_number()? as u8;
-            Ok(Instruction::ToBot { value, to })
-        } else if p.expect(b"bot ")? {
-            let bot = p.consume_number()? as u8;
-            assert!(p.expect(b" gives low to ")?);
-            let low = Output::parse(&mut p)?;
-            let _ = p.expect(b" and high to ")?;
-            let high = Output::parse(&mut p)?;
-            Ok(Instruction::State { bot, low, high })
-        } else {
-            panic!("unexpected line: {}", line);
-        }
-    }).collect::<Result<_, ::failure::Error>>().unwrap()
+        .filter(|line| {
+            !line.is_empty()
+        })
+        .map(|line| {
+            let mut p = Parser::new(line.as_bytes());
+            if p.expect(b"value ")? {
+                let value = p.consume_number()? as u8;
+                assert!(p.expect(b" goes to bot ")?);
+                let to = p.consume_number()? as u8;
+                Ok(Instruction::ToBot { value, to })
+            } else if p.expect(b"bot ")? {
+                let bot = p.consume_number()? as u8;
+                assert!(p.expect(b" gives low to ")?);
+                let low = Output::parse(&mut p)?;
+                assert!(p.expect(b" and high to ")?);
+                let high = Output::parse(&mut p)?;
+                Ok(Instruction::State { bot, low, high })
+            } else {
+                panic!("unexpected line: {}", line);
+            }
+        }).collect::<Result<_, ::failure::Error>>().unwrap()
 }
 
 #[derive(Debug)]
