@@ -1,4 +1,5 @@
 use std::mem;
+use std::cmp;
 use std::collections::BTreeMap;
 
 use smallvec::SmallVec;
@@ -29,16 +30,18 @@ impl Output {
         Ok(c(p.consume_number()? as u8))
     }
 
-    fn put(self, value: u8, bots: &mut BTreeMap<u8, Bot>, outputs: &mut BTreeMap<u8, u8>) -> Option<u8> {
+    fn put(self, value: u8, bots: &mut Vec<Bot>, outputs: &mut Vec<Option<u8>>) -> Option<u8> {
         match self {
             Output::Bot(n) => {
-                let mut chips = &mut bots.get_mut(&n).unwrap().chips;
+                let mut chips = &mut bots[n as usize].chips;
                 chips.push(value);
                 if chips.len() == 2 {
                     return Some(n);
                 }
             },
-            Output::Output(n) => assert!(outputs.insert(n, value).is_none()),
+            Output::Output(n) => {
+                outputs[n as usize] = Some(value);
+            },
         }
         None
     }
@@ -96,14 +99,21 @@ impl Bot {
     }
 }
 
-fn get_bots(s: &str) -> BTreeMap<u8, Bot> {
+fn get_bots(s: &str) -> (Vec<Bot>, Vec<Option<u8>>) {
     let mut bots = BTreeMap::new();
+    let mut outputs = 0;
     for instr in parse_input(s) {
         match instr {
             Instruction::State { bot, low, high } => {
                 let mut bot = bots.entry(bot as u8).or_insert_with(|| Bot::new(bot as u8));
                 assert_eq!(bot.low, None);
                 assert_eq!(bot.high, None);
+                if let Output::Output(x) = low {
+                    outputs = cmp::max(x, outputs);
+                }
+                if let Output::Output(x) = high {
+                    outputs = cmp::max(x, outputs);
+                }
                 bot.low = Some(low);
                 bot.high = Some(high);
             }
@@ -113,61 +123,59 @@ fn get_bots(s: &str) -> BTreeMap<u8, Bot> {
             }
         }
     }
-    bots
+    let mut v = Vec::with_capacity(bots.len());
+    for (_, bot) in bots {
+        assert_eq!(v.len(), bot.number as usize);
+        v.push(bot);
+    }
+    (v, vec![None; outputs as usize + 1])
 }
 
 pub fn part1(s: &str) -> usize {
-    let mut bots = get_bots(s);
-    let mut outputs: BTreeMap<u8, u8> = BTreeMap::new();
+    let (mut bots, mut outputs) = get_bots(s);
 
-    let mut to_check = bots.values()
+    let mut to_check = bots.iter()
             .filter(|b| b.chips.len() == 2)
             .map(|b| b.number)
             .collect::<Vec<_>>();
-    while !to_check.is_empty() {
-        let mut next = Vec::new();
-        for num in to_check {
-            let mut chips = mem::replace(&mut bots.get_mut(&num).unwrap().chips, SmallVec::new());
-            let (low, high) = {
-                let bot = &bots[&num];
-                (bot.low(), bot.high())
-            };
-            chips.sort();
-            if chips == SmallVec::from_buf([17, 61]) {
-                return num as usize;
-            }
-            next.extend(low.put(chips[0], &mut bots, &mut outputs));
-            next.extend(high.put(chips[1], &mut bots, &mut outputs));
+    while let Some(num) = to_check.pop() {
+        let num = num as usize;
+        let mut chips = mem::replace(&mut bots[num].chips, SmallVec::new());
+        let (low, high) = {
+            let bot = &bots[num];
+            (bot.low(), bot.high())
+        };
+        chips.sort();
+        if chips == SmallVec::from_buf([17, 61]) {
+            return num as usize;
         }
-        to_check = next;
+        to_check.extend(low.put(chips[0], &mut bots, &mut outputs));
+        to_check.extend(high.put(chips[1], &mut bots, &mut outputs));
     }
     panic!("unable to find bot")
 }
 
 pub fn part2(s: &str) -> usize {
-    let mut bots = get_bots(s);
-    let mut outputs: BTreeMap<u8, u8> = BTreeMap::new();
+    let (mut bots, mut outputs) = get_bots(s);
 
-    let mut to_check = bots.values()
+    let mut to_check = bots.iter()
             .filter(|b| b.chips.len() == 2)
             .map(|b| b.number)
             .collect::<Vec<_>>();
-    while !to_check.is_empty() {
-        let mut next = Vec::new();
-        for num in to_check {
-            let mut chips = mem::replace(&mut bots.get_mut(&num).unwrap().chips, SmallVec::new());
-            let (low, high) = {
-                let bot = &bots[&num];
-                (bot.low(), bot.high())
-            };
-            chips.sort();
-            next.extend(low.put(chips[0], &mut bots, &mut outputs));
-            next.extend(high.put(chips[1], &mut bots, &mut outputs));
-        }
-        to_check = next;
+    while let Some(num) = to_check.pop() {
+        let mut chips = mem::replace(&mut bots[num as usize].chips, SmallVec::new());
+        let (low, high) = {
+            let bot = &bots[num as usize];
+            (bot.low(), bot.high())
+        };
+        chips.sort();
+        to_check.extend(low.put(chips[0], &mut bots, &mut outputs));
+        to_check.extend(high.put(chips[1], &mut bots, &mut outputs));
     }
 
-    (outputs[&0] as usize) * (outputs[&1] as usize) * (outputs[&2] as usize)
+    (outputs[0].unwrap() as usize) *
+    (outputs[1].unwrap() as usize) *
+    (outputs[2].unwrap() as usize)
 }
 
 #[test]
