@@ -67,15 +67,22 @@ pub fn part2(n: usize) -> usize {
     let mut stride = 1;
     let mut last_step = Step::Down;
     loop {
-        let value =
-            squares.iter().find(|v| v.0 == position.go(Step::Left)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Right)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Up)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Down)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Up).go(Step::Left)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Up).go(Step::Right)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Down).go(Step::Left)).map(|x| x.1).unwrap_or(0) +
-            squares.iter().find(|v| v.0 == position.go(Step::Down).go(Step::Right)).map(|x| x.1).unwrap_or(0);
+        let mut value = 0;
+        let to_find = &[
+            position.go(Step::Right),
+            position.go(Step::Up),
+            position.go(Step::Down),
+            position.go(Step::Up).go(Step::Left),
+            position.go(Step::Up).go(Step::Right),
+            position.go(Step::Down).go(Step::Left),
+            position.go(Step::Down).go(Step::Right),
+            position.go(Step::Left),
+        ];
+        for x in &squares {
+            if to_find.contains(&x.0) {
+                value += x.1;
+            }
+        }
         let value = if i == 1 { 1 } else { value };
         squares.push((position, value));
         if value > n as u64 {
