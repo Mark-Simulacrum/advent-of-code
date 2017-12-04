@@ -14,19 +14,26 @@ macro_rules! gen {
         )+
 
         fn main() {
-            let bench = std::env::var("BENCH").ok().map_or(false, |c| c == "1");
-            if !bench {
+            let bench: String = std::env::var("BENCH").ok().unwrap_or_else(|| String::from("0"));
+            let should_bench = bench != "0";
+            if !should_bench {
             $(
                 println!("{}::part1 = {}", stringify!($day), $day::part1($day::INPUT));
                 println!("{}::part2 = {}", stringify!($day), $day::part2($day::INPUT));
             )+
             } else {
-                for _ in 0..1000 {
             $(
-                    $day::part1($day::INPUT);
-                    $day::part2($day::INPUT);
-            )+
+                if concat!(stringify!($day), "::part1") == bench {
+                    println!("benching {}", bench);
+                    for _ in 0..10_000 {
+                        $day::part1($day::INPUT);
+                    }
+                } else if concat!(stringify!($day), "::part2") == bench {
+                    for _ in 0..10_000 {
+                        $day::part2($day::INPUT);
+                    }
                 }
+            )+
             }
         }
 
