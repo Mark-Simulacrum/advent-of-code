@@ -12,5 +12,10 @@ name = "y2016"
 path = "src/bin/y2016/main.rs"
 bench = true
 
+[[bin]]
+name = "y2017"
+path = "src/bin/y2017/main.rs"
+bench = true
+
 [profile.release]
 debug = true
