@@ -78,7 +78,7 @@ impl<'a> Parser<'a> {
             self.advance();
             Ok(())
         } else {
-            return Err(ParserError::Unexpected(format!("char {}", x), next.map(|c| c as char)));
+            return Err(ParserError::Unexpected(format!("char {}", x as char), next.map(|c| c as char)));
         }
     }
 
