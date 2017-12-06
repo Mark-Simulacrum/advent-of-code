@@ -122,6 +122,9 @@ macro_rules! gen {
 
         fn main() {
             let bench: String = std::env::var("BENCH").ok().unwrap_or_else(|| String::from("0"));
+            let iters: usize = std::env::var("BENCH_TIMES").ok()
+                .and_then(|x| x.parse().ok())
+                .unwrap_or(1000);
             let should_bench = bench != "0";
             if !should_bench {
             $(
@@ -132,11 +135,11 @@ macro_rules! gen {
             $(
                 if concat!(stringify!($day), "::part1") == bench {
                     println!("benching {}", bench);
-                    for _ in 0..10_000 {
+                    for _ in 0..iters {
                         $day::part1($day::INPUT);
                     }
                 } else if concat!(stringify!($day), "::part2") == bench {
-                    for _ in 0..10_000 {
+                    for _ in 0..iters {
                         $day::part2($day::INPUT);
                     }
                 }
