@@ -1,4 +1,4 @@
-pub fn part1(i: &[isize]) -> usize {
+fn eval<F: Fn(isize) -> isize>(i: &[isize], f: F) -> usize {
     let mut nums = Vec::from(i);
     let mut idx = 0isize;
     let mut jumps = 0;
@@ -10,28 +10,18 @@ pub fn part1(i: &[isize]) -> usize {
             let offset_value = *offset;
             idx = idx + offset_value;
             jumps += 1;
-            *offset = offset_value + 1;
+            *offset = offset_value + f(offset_value);
         }
     }
     jumps
 }
 
+pub fn part1(i: &[isize]) -> usize {
+    eval(i, |_| 1)
+}
+
 pub fn part2(i: &[isize]) -> usize {
-    let mut nums = Vec::from(i);
-    let mut idx = 0isize;
-    let mut jumps = 0;
-    let len = nums.len() as isize;
-    let ptr = nums.as_mut_ptr();
-    unsafe {
-        while idx >= 0 && idx < len {
-            let offset = ptr.offset(idx);
-            let offset_value = *offset;
-            idx = idx + offset_value;
-            jumps += 1;
-            *offset = offset_value + if offset_value >= 3 { -1 } else { 1 };
-        }
-    }
-    jumps
+    eval(i, |v| if v >= 3 { -1 } else { 1 })
 }
 
 #[test]
