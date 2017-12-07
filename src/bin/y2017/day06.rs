@@ -1,45 +1,75 @@
-use std::collections::{HashSet, HashMap};
-
 fn max(list: &[u32]) -> (usize, u32) {
-    list.iter().cloned().enumerate()
-        // If the maximum values are tied, we want the lowest index to win.
-        // Since this is a max, the largest negative index will be the smallest index.
-        .max_by_key(|x| (x.1, -(x.0 as isize)))
-        .unwrap()
+    let mut max = 0;
+    let mut max_idx = 0;
+    let mut idx = list.len() - 1;
+    loop {
+        let i = list[idx];
+        if i >= max {
+            max_idx = idx;
+            max = i;
+        }
+        if idx == 0 { break; }
+        idx -= 1;
+    }
+    (max_idx, max)
 }
 
-fn redistribute(blocks: &mut [u32]) {
+// step
+fn f(blocks: &mut [u32]) -> &mut [u32] {
     let (max_pos, mut max) = max(&*blocks);
     blocks[max_pos] = 0;
-    for i in (0..blocks.len()).into_iter().cycle().skip(max_pos + 1) {
-        if max == 0 {
-            break;
-        }
-        blocks[i] += 1;
+    let mut j = 0;
+    let len = blocks.len();
+    while max > 0 {
+        blocks[(max_pos + j + 1) % len] += 1;
         max -= 1;
+        j += 1;
     }
+    blocks
+}
+
+fn exec(s: &[u32]) -> (usize, usize) {
+    let x0 = Vec::from(s);
+
+    let mut tortoise_0 = x0.clone();
+    let mut hare_0 = x0.clone();
+
+    let tortoise = f(&mut tortoise_0);
+    let hare = f(f(&mut hare_0));
+    while tortoise != hare {
+        f(tortoise);
+        f(f(hare));
+    }
+
+    let mut mu = 0;
+    let mut tortoise_0 = x0.clone();
+    let tortoise = &mut tortoise_0[..];
+    while tortoise != hare {
+        f(tortoise);
+        f(hare);
+        mu += 1;
+    }
+
+    let mut lam = 1;
+    let mut hare_0 = Vec::from(&*tortoise);
+    let hare = f(&mut hare_0);
+    while tortoise != hare {
+        f(hare);
+        lam += 1;
+    }
+
+    (lam, mu)
 }
 
 pub fn part1(s: &[u32]) -> usize {
-    let mut blocks = Vec::from(s);
-    let mut seen = HashSet::new();
-    while seen.insert(blocks.clone()) {
-        redistribute(&mut blocks);
-    }
-    seen.len()
+    let (a, b) = exec(s);
+    a + b
 }
 
 // How long ago did we see the looped state?
 pub fn part2(s: &[u32]) -> usize {
-    let mut seen = HashMap::new();
-    let mut blocks = Vec::from(s);
-    loop {
-        let len = seen.len();
-        if let Some(last) = seen.insert(blocks.clone(), len) {
-            return len - last;
-        }
-        redistribute(&mut blocks);
-    }
+    let (a, _) = exec(s);
+    a
 }
 
 #[test]
