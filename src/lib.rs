@@ -50,6 +50,12 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn consume_bytes_until(&mut self, c: u8) -> &'a [u8] {
+        let orig_idx = self.idx;
+        let _ = self.consume_until(c);
+        &self.input[orig_idx..self.idx]
+    }
+
     pub fn expect(&mut self, needle: &[u8]) -> Result<bool, ParserError> {
         match self.consume_bytes(needle.len()).map(|b| b == needle) {
             Ok(eq) => {
@@ -82,6 +88,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn consume_signed_number(&mut self) -> Result<i64, ParserError> {
+        let sign = if self.cur() == Some(b'-') {
+            self.advance();
+            -1
+        } else { 1 };
+        Ok(self.consume_number()? as i64 * sign)
+    }
     pub fn consume_number(&mut self) -> Result<u64, ParserError> {
         let mut i = 0;
         let mut out = 0;
@@ -128,8 +141,20 @@ macro_rules! gen {
             let should_bench = bench != "0";
             if !should_bench {
             $(
-                println!("{}::part1 = {}", stringify!($day), $day::part1($day::INPUT));
-                println!("{}::part2 = {}", stringify!($day), $day::part2($day::INPUT));
+                {
+                    let start = ::std::time::Instant::now();
+                    let res = $day::part1($day::INPUT);
+                    let elapsed = start.elapsed();
+                    println!("{}::part1 = {} ({}s {}ns)",
+                        stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                }
+                {
+                    let start = ::std::time::Instant::now();
+                    let res = $day::part2($day::INPUT);
+                    let elapsed = start.elapsed();
+                    println!("{}::part2 = {} ({}s {}ns)",
+                        stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                }
             )+
             } else {
             $(
