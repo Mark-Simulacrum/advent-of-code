@@ -1,4 +1,8 @@
 #[macro_use] extern crate failure;
+extern crate memchr;
+
+use memchr::memchr;
+use memchr::memchr2;
 
 #[derive(Fail, Debug, PartialEq, Eq)]
 pub enum ParserError {
@@ -23,15 +27,27 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[inline(always)]
     pub fn at_end(&self) -> bool {
         self.idx == self.input.len()
     }
 
+    #[inline(always)]
     pub fn cur(&self) -> Option<u8> {
-        self.input.get(self.idx).cloned()
+        self.input.get(self.idx).map(|x| *x)
     }
 
-    fn advance(&mut self) {
+    #[inline(always)]
+    pub fn read(&mut self) -> Option<u8> {
+        let out = self.cur();
+        if out.is_some() {
+            self.idx += 1;
+        }
+        out
+    }
+
+    #[inline(always)]
+    pub fn advance(&mut self) {
         if self.at_end() {
             panic!("advanced past input length");
         }
@@ -40,13 +56,31 @@ impl<'a> Parser<'a> {
 
     /// If needle isn't present, consumes until EOF.
     pub fn consume_until(&mut self, c: u8) -> usize {
-        if let Some(idx) = self.input[self.idx..].iter().position(|b| *b == c) {
+        if let Some(idx) = memchr(c, &self.input[self.idx..]) {
             self.idx += idx;
             idx
         } else {
             let ret = self.input.len() - self.idx;
             self.idx = self.input.len();
             ret
+        }
+    }
+
+    pub fn consume_until_or_stop(&mut self, c: u8) -> Option<usize> {
+        if let Some(idx) = memchr(c, &self.input[self.idx..]) {
+            self.idx += idx;
+            Some(idx)
+        } else {
+            None
+        }
+    }
+
+    pub fn consume_until2_or_stop(&mut self, a: u8, b: u8) -> Option<usize> {
+        if let Some(idx) = memchr2(a, b, &self.input[self.idx..]) {
+            self.idx += idx;
+            Some(idx)
+        } else {
+            None
         }
     }
 

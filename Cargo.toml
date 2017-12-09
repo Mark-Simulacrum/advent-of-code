@@ -9,6 +9,7 @@ smallvec = "0.6"
 itertools = "0.7"
 bitflags = "1.0"
 petgraph = "0.4"
+memchr = "2.0"
 
 [[bin]]
 name = "y2016"
