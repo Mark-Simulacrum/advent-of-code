@@ -115,7 +115,7 @@ impl<'a> Parser<'a> {
     pub fn consume(&mut self, x: u8) -> Result<(), ParserError> {
         let next = self.cur();
         if next == Some(x) {
-            self.advance();
+            self.idx += 1;
             Ok(())
         } else {
             return Err(ParserError::Unexpected(format!("char {}", x as char), next.map(|c| c as char)));
@@ -124,16 +124,17 @@ impl<'a> Parser<'a> {
 
     pub fn consume_signed_number(&mut self) -> Result<i64, ParserError> {
         let sign = if self.cur() == Some(b'-') {
-            self.advance();
+            self.idx += 1;
             -1
         } else { 1 };
         Ok(self.consume_number()? as i64 * sign)
     }
+
     pub fn consume_number(&mut self) -> Result<u64, ParserError> {
         let mut i = 0;
         let mut out = 0;
         while let Some(next) = self.cur().and_then(|c| (c as char).to_digit(10)) {
-            self.advance();
+            self.idx += 1;
             out *= 10;
             out += next as u64;
             i += 1;
