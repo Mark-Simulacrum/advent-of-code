@@ -1,5 +1,3 @@
-use std::cmp;
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Step {
     Right,
@@ -20,41 +18,34 @@ impl Step {
 }
 
 pub fn part1(n: usize) -> usize {
-    let mut position = Position(0, 0);
-    let mut i = 1;
-    let mut strides_run = 0;
-    let mut stride = 1;
-    let mut last_step = Step::Down;
-    while i != n {
-        if strides_run == 2 {
-            stride += 1;
-            strides_run = 0;
-        }
-        strides_run += 1;
-        last_step = last_step.spiral();
-        let go = cmp::min(n - i, stride);
-        position = position.go_n(last_step, go);
-        i += go;
-    }
-    (position.0.abs() + position.1.abs()) as usize
+    if n == 1 { return 0; }
+    let spiral = (((n as f64).sqrt() - 1.0) / 2.0).ceil() as usize;
+    let top_right = 4*spiral.pow(2) - 2 * spiral + 1;
+    let bot_left  = 4*spiral.pow(2) + 2 * spiral + 1;
+    let top_left  = 4*spiral.pow(2) + 1;
+    let mid = (bot_left - top_left) / 2;
+    let center_left = top_left + mid;
+    let center_top = top_left - mid;
+    let center_right = top_right - mid;
+    let center_bot = bot_left + mid;
+    let distance_to_center = [center_left, center_top, center_right, center_bot].iter()
+        .map(|x| n.checked_sub(*x).unwrap_or_else(|| x -n ))
+        .min().unwrap();
+    spiral + distance_to_center
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 struct Position(i64, i64);
 
 impl Position {
-    fn go_n(mut self, step: Step, n: usize) -> Self {
-        let n = n as i64;
+    fn go(mut self, step: Step) -> Self {
         match step {
-            Step::Up => self.1 += n,
-            Step::Down => self.1 -= n,
-            Step::Right => self.0 += n,
-            Step::Left => self.0 -= n,
+            Step::Up => self.1 += 1,
+            Step::Down => self.1 -= 1,
+            Step::Right => self.0 += 1,
+            Step::Left => self.0 -= 1,
         }
         self
-    }
-    fn go(self, step: Step) -> Self {
-        self.go_n(step, 1)
     }
 }
 
