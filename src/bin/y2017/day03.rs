@@ -17,13 +17,17 @@ impl Step {
     }
 }
 
+fn spiral(n: usize) -> usize {
+    (((n as f64).sqrt() - 1.0) / 2.0).ceil() as usize
+}
+
 pub fn part1(n: usize) -> usize {
     if n == 1 { return 0; }
-    let spiral = (((n as f64).sqrt() - 1.0) / 2.0).ceil() as usize;
+    let spiral = spiral(n);
     let top_right = 4*spiral.pow(2) - 2 * spiral + 1;
     let bot_left  = 4*spiral.pow(2) + 2 * spiral + 1;
     let top_left  = 4*spiral.pow(2) + 1;
-    let mid = (bot_left - top_left) / 2;
+    let mid = spiral;
     let center_left = top_left + mid;
     let center_top = top_left - mid;
     let center_right = top_right - mid;
