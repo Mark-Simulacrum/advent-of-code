@@ -61,6 +61,8 @@ pub fn part2(n: usize) -> usize {
     let mut strides_run = 0;
     let mut stride = 1;
     let mut last_step = Step::Down;
+    let mut cur_loop_start = 0;
+    let mut last_loop_start = 0usize;
     loop {
         let mut value = 0;
         let to_find = &[
@@ -73,7 +75,7 @@ pub fn part2(n: usize) -> usize {
             position.go(Step::Down).go(Step::Right),
             position.go(Step::Left),
         ];
-        for x in &squares {
+        for x in &squares[last_loop_start.saturating_sub(1)..] {
             if to_find.contains(&x.0) {
                 value += x.1;
             }
@@ -91,6 +93,10 @@ pub fn part2(n: usize) -> usize {
             }
             strides_run += 1;
             last_step = last_step.spiral();
+            if last_step == Step::Up {
+                last_loop_start = cur_loop_start;
+                cur_loop_start = i;
+            }
         }
         position = position.go(last_step);
         cur += 1;
