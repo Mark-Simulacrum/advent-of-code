@@ -1,31 +1,29 @@
 use std::collections::HashMap;
-use std::str;
+use std::str::{self, FromStr};
 use std::cmp;
 
 pub fn part1(s: &str) -> i64 {
-    let mut max = 0;
     let mut map = HashMap::<&str, i64>::new();
     for line in s.trim().lines() {
-        let (reg, delta, condition_reg, op, condition_value) = parse_line(line);
+        let (reg, delta, condition_reg, condition) = parse_line(line);
         let conditon_reg_value = *map.entry(condition_reg).or_insert(0);
         let reg_entry = map.entry(reg).or_insert(0);
-        if op.eval(condition_value, conditon_reg_value) {
+        if condition.eval(conditon_reg_value) {
             let value = *reg_entry;
             *reg_entry = value + delta;
-            max = cmp::max(*reg_entry, max);
         }
     }
-    max
+    *map.values().max().unwrap()
 }
 
 pub fn part2(s: &str) -> i64 {
     let mut max = 0;
     let mut map = HashMap::<&str, i64>::new();
     for line in s.trim().lines() {
-        let (reg, delta, condition_reg, op, condition_value) = parse_line(line);
+        let (reg, delta, condition_reg, condition) = parse_line(line);
         let conditon_reg_value = *map.entry(condition_reg).or_insert(0);
         let reg_entry = map.entry(reg).or_insert(0);
-        if op.eval(condition_value, conditon_reg_value) {
+        if condition.eval(conditon_reg_value) {
             let value = *reg_entry;
             max = cmp::max(value, max);
             *reg_entry = value + delta;
@@ -34,15 +32,20 @@ pub fn part2(s: &str) -> i64 {
     max
 }
 
-fn parse_line(line: &str) -> (&str, i64, &str, Op, i64) {
-    let mut elements = line.split(' ');
+fn parse<T: FromStr>(v: &str) -> T
+    where T::Err: ::std::fmt::Debug,
+{
+    match v.parse() {
+        Ok(v) => v,
+        Err(err) => panic!("unable to parse {:?}: {:?}", v, err),
+    }
+}
+
+fn parse_line(line: &str) -> (&str, i64, &str, Condition) {
+    let mut elements = line.split_whitespace();
     let register = elements.next().unwrap();
-    let sign = if elements.next().unwrap() == "dec" {
-        -1
-    } else {
-        1
-    };
-    let num = sign * elements.next().unwrap().parse::<i64>().unwrap();
+    let sign = if elements.next().unwrap() == "inc" { 1 } else { -1 };
+    let num = sign * parse::<i64>(elements.next().unwrap());
     let _ = elements.next().unwrap(); // if
     let condition_reg = elements.next().unwrap();
     let op = match elements.next().unwrap() {
@@ -54,10 +57,11 @@ fn parse_line(line: &str) -> (&str, i64, &str, Op, i64) {
         "<=" => Op::LessThanEqual,
         s => panic!("Unexpected bytes: {:?} ({})", s, line),
     };
-    let expected_value = elements.next().unwrap().parse::<i64>().unwrap();
-    (register, num, condition_reg, op, expected_value)
+    let expected_value = parse::<i64>(elements.next().unwrap());
+    (register, num, condition_reg, Condition { op, value:  expected_value })
 }
 
+#[derive(Copy, Clone, Debug)]
 enum Op {
     NotEqual,
     Equal,
@@ -67,15 +71,21 @@ enum Op {
     LessThanEqual,
 }
 
-impl Op {
-    fn eval(self, current: i64, compare_with: i64) -> bool {
-        match self {
-            Op::Equal => current == compare_with,
-            Op::NotEqual => current != compare_with,
-            Op::GreaterThan => current > compare_with,
-            Op::GreaterThanEqual => current >= compare_with,
-            Op::LessThan => current < compare_with,
-            Op::LessThanEqual => current <= compare_with,
+#[derive(Copy, Clone, Debug)]
+struct Condition {
+    op: Op,
+    value: i64,
+}
+
+impl Condition {
+    fn eval(self, value: i64) -> bool {
+        match self.op {
+            Op::Equal => value == self.value,
+            Op::NotEqual => value != self.value,
+            Op::GreaterThan => value > self.value,
+            Op::GreaterThanEqual => value >= self.value,
+            Op::LessThan => value < self.value,
+            Op::LessThanEqual => value <= self.value,
         }
     }
 }
@@ -86,9 +96,27 @@ fn part1_actual() {
 }
 
 #[test]
+fn part1_1() {
+    assert_eq!(part1(EXAMPLE), 1);
+}
+
+#[test]
 fn part2_actual() {
     assert_eq!(part2(INPUT), 5199);
 }
+
+#[test]
+fn part2_1() {
+    assert_eq!(part2(EXAMPLE), 10);
+}
+
+#[cfg(test)]
+static EXAMPLE: &str = "
+b inc 5 if a > 1
+a inc 1 if b < 5
+c dec -10 if a >= 1
+c inc -20 if c == 10
+";
 
 pub static INPUT: &str = "
 d dec 683 if qn == 0
