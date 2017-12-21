@@ -11,6 +11,10 @@ pub fn part1(input: &str) -> usize {
 }
 
 pub fn part2(input: &str) -> String {
+    format!("{:x}", knot_hash(input))
+}
+
+pub fn knot_hash(input: &str) -> u128 {
     let mut input = input.as_bytes().iter().map(|x| *x as usize).collect::<Vec<usize>>();
     input.extend_from_slice(&[17, 31, 73, 47, 23]);
     let mut list = (0..256).into_iter().collect::<Vec<usize>>();
@@ -19,16 +23,16 @@ pub fn part2(input: &str) -> String {
     for _ in 0..64 {
         run(&mut list, &mut cur, &mut skip, &input[..]);
     }
-    let mut dense = String::new();
+    let mut dense = 0u128;
     for i in 0..16 {
         let base = i * 16;
         let mut o = list[base];
         for m in 1..16 {
             o ^= list[base + m];
         }
-        dense.push_str(&format!("{:02x}", o));
+        dense += (o as u128) << (i as u128 * 8);
     }
-    dense
+    dense.to_be()
 }
 
 #[inline(always)]

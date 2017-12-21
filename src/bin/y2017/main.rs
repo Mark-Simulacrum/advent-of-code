@@ -1,5 +1,5 @@
 #![cfg_attr(test, feature(test))]
-#![feature(plugin, conservative_impl_trait, drain_filter)]
+#![feature(plugin, i128, i128_type, conservative_impl_trait, drain_filter)]
 #![plugin(quickcheck_macros)]
 #[cfg(test)]
 extern crate test;
@@ -11,4 +11,4 @@ extern crate petgraph;
 extern crate memchr;
 
 gen!(day01, day02, day03, day04, day05, day06, day07, day08, day09,
-     day10, day11, day12, day13);
+     day10, day11, day12, day13, day14);
