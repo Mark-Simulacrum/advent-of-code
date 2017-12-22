@@ -1,9 +1,8 @@
 #![cfg_attr(test, feature(test))]
-#![feature(plugin, i128, i128_type, conservative_impl_trait, drain_filter)]
-#![plugin(quickcheck_macros)]
+#![feature(i128, i128_type, conservative_impl_trait, drain_filter)]
 #[cfg(test)]
 extern crate test;
-#[cfg(test)]
+#[macro_use]
 extern crate quickcheck;
 #[macro_use] extern crate advent_of_code;
 extern crate smallvec;

@@ -11,7 +11,6 @@ bitflags = "1.0"
 petgraph = "0.4"
 memchr = "2.0"
 quickcheck = "0.5"
-quickcheck_macros = "0.5"
 
 [[bin]]
 name = "y2016"

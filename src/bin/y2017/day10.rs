@@ -68,15 +68,16 @@ fn reverse_after<T>(slice: &mut [T], a: usize, length: usize) {
     }
 }
 
-#[quickcheck]
-fn circle_rev_any(v: Vec<usize>, a: usize, length: usize) -> TestResult {
-    if a >= v.len() || length > v.len() {
-        return TestResult::discard();
+quickcheck! {
+    fn circle_rev_any(v: Vec<usize>, a: usize, length: usize) -> TestResult {
+        if a >= v.len() || length > v.len() {
+            return TestResult::discard();
+        }
+        let mut circle = v.clone();
+        reverse_after(&mut circle, a, length);
+        reverse_after(&mut circle, a, length);
+        TestResult::from_bool(circle == v)
     }
-    let mut circle = v.clone();
-    reverse_after(&mut circle, a, length);
-    reverse_after(&mut circle, a, length);
-    TestResult::from_bool(circle == v)
 }
 
 #[test]
