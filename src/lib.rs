@@ -170,25 +170,28 @@ macro_rules! gen {
 
         fn main() {
             let bench: String = std::env::var("BENCH").ok().unwrap_or_else(|| String::from("0"));
+            let filter: String = std::env::args().nth(1).unwrap_or_default();
             let iters: usize = std::env::var("BENCH_TIMES").ok()
                 .and_then(|x| x.parse().ok())
                 .unwrap_or(1000);
             let should_bench = bench != "0";
             if !should_bench {
             $(
-                {
-                    let start = ::std::time::Instant::now();
-                    let res = $day::part1($day::INPUT);
-                    let elapsed = start.elapsed();
-                    println!("{}::part1 = {} ({}s {}ns)",
-                        stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
-                }
-                {
-                    let start = ::std::time::Instant::now();
-                    let res = $day::part2($day::INPUT);
-                    let elapsed = start.elapsed();
-                    println!("{}::part2 = {} ({}s {}ns)",
-                        stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                if stringify!($day).contains(&filter) {
+                    {
+                        let start = ::std::time::Instant::now();
+                        let res = $day::part1($day::INPUT);
+                        let elapsed = start.elapsed();
+                        println!("{}::part1 = {} ({}s {}ns)",
+                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                    }
+                    {
+                        let start = ::std::time::Instant::now();
+                        let res = $day::part2($day::INPUT);
+                        let elapsed = start.elapsed();
+                        println!("{}::part2 = {} ({}s {}ns)",
+                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                    }
                 }
             )+
             } else {
