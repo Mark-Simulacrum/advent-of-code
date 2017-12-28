@@ -1,9 +1,5 @@
-#![allow(unused)]
-
-use std::marker::PhantomData;
 use std::mem;
 use std::fmt;
-use std::iter;
 use smallvec::SmallVec;
 
 const ON: u8 = b'#';
@@ -16,6 +12,10 @@ impl BitVec {
     const BITS_PER_CELL: usize = mem::size_of::<u64>() * 8;
     fn new() -> Self {
         BitVec(SmallVec::from([0; 1]))
+    }
+
+    fn with_capacity(n: usize) -> Self {
+        BitVec(SmallVec::from_vec(vec![0; n / Self::BITS_PER_CELL]))
     }
 
     fn count_ones(&self) -> u32 {
@@ -49,53 +49,13 @@ impl BitVec {
     fn get(&self, i: usize) -> bool {
         (self.get_cell(i) & (1 << Self::bit_in_cell(i))) != 0
     }
-
-    fn make_space_at(&mut self, i: usize) {
-        let bit = Self::bit_in_cell(i);
-        let last_idx = (i / Self::BITS_PER_CELL + 1) * Self::BITS_PER_CELL - 1;
-        let last_bit_in_cell = self.get(last_idx);
-        if last_bit_in_cell {
-            self.insert(last_idx + 1, true);
-        }
-        let right_mask = 2u64.pow(bit as u32) - 1;
-        let right = self.get_cell(i) & right_mask;
-        let left = self.get_cell(i) & !right_mask;
-        {
-            let cell = self.get_cell_mut(i);
-            *cell = ((left << 1) | right);
-        }
-    }
-
-    fn insert(&mut self, i: usize, v: bool) {
-        self.make_space_at(i);
-        self.set(i, v);
-    }
-}
-
-#[test]
-fn bitvec_insert() {
-    let mut v = BitVec::new();
-    v.set(0, true);
-    v.set(2, true);
-    v.insert(1, true);
-    assert_eq!(format!("{:05b}", v.0[0]), format!("{:05b}", 0b1011));
-}
-
-#[test]
-fn bitvec_insert_at_end() {
-    let mut v = BitVec::new();
-    v.set(0, true);
-    v.set(2, true);
-    v.insert(63, true);
-    v.insert(63, true);
-    assert_eq!(format!("{:064b}", v.0[0]), format!("{:064b}", (0b1u64 << 63) | 0b101));
-    assert_eq!(format!("{:064b}", v.0[1]), format!("{:064b}", 0b1));
 }
 
 #[derive(Clone, PartialEq, Eq)]
 struct Grid {
     grid: BitVec,
     size: usize,
+    iterations: usize,
 }
 
 struct DebugGrid<'a, 'b>(&'a Grid, &'b str);
@@ -112,9 +72,9 @@ impl<'a, 'b> fmt::Debug for DebugGrid<'a, 'b> {
             for j in 0..self.0.size {
                 let idx = i*self.0.size + j;
                 if self.0.grid.get(idx) {
-                    write!(f, "#");
+                    write!(f, "#")?;
                 } else {
-                    write!(f, ".");
+                    write!(f, ".")?;
                 }
             }
             if i + 1 != self.0.size {
@@ -143,15 +103,15 @@ fn grid_dbg_3() {
 impl Grid {
     fn new(size: usize) -> Grid {
         Grid {
-            grid: BitVec::new(),
+            grid: BitVec::with_capacity(size.pow(2)),
             size,
+            iterations: 0,
         }
     }
 
     fn interpret(pattern: &str) -> Grid {
         let mut grid = BitVec::new();
         let mut size = 0;
-        let mut out = 0;
         let mut idx = 0;
         for (i, &b) in pattern.trim().as_bytes().iter().enumerate() {
             if b == b'/' || b == b'\n' {
@@ -168,6 +128,7 @@ impl Grid {
         Grid {
             grid,
             size,
+            iterations: 0,
         }
     }
 
@@ -194,7 +155,6 @@ impl Grid {
     }
 
     fn reverse_rows(&mut self) {
-        let s = self.size;
         for row in 0..self.size {
             let x = (0..self.size)
                 .into_iter()
@@ -218,35 +178,6 @@ impl Grid {
         a
     }
 
-    fn bump_size(&mut self, d: usize) {
-        assert!(self.size % d == 0);
-        let mut increased_by = 0;
-        for i in 0..(self.size / d) {
-            self.grid.insert(increased_by + i*d+1, false);
-            increased_by += 1;
-        }
-        self.size += self.size / d;
-    }
-
-    fn matches(&mut self, other: &Self) -> bool {
-        assert!(self.size == 2 || self.size == 3,
-            "can only match 2 or 3 sized patterns, found: {}", self.size);
-        assert_eq!(self.size, other.size);
-        if self == other { return true; }
-        let mut a = self;
-        if a.reversed_rows() == *other { return true; }
-        a.rotate_90();
-        if a == other { return true; }
-        if a.reversed_rows() == *other { return true; }
-        a.rotate_90(); // 180
-        if a == other { return true; }
-        if a.reversed_rows() == *other { return true; }
-        a.rotate_90(); // 270
-        if a == other { return true; }
-        if a.reversed_rows() == *other { return true; }
-        false
-    }
-
     fn load_from(&mut self, start: usize, other: &Grid) {
         for row in 0..self.size {
             for col in 0..self.size {
@@ -266,37 +197,49 @@ impl Grid {
         }
     }
 
-    fn step(&mut self, n: usize, rules: &[(Grid, Grid)]) {
-        let mut outs = Vec::new();
-        for col in 0..(self.size / n) {
-            for row in 0..(self.size / n) {
-                let idx = col * n * self.size + row * n;
+    fn step(&self, rules_2: Rules, rules_3: Rules) -> Grid {
+        if self.size % 2 == 0 {
+            self.step_n(2, rules_2)
+        } else {
+            assert!(self.size % 3 == 0);
+            self.step_n(3, rules_3)
+        }
+    }
+
+    fn step_n(&self, n: usize, rules: &[(Vec<Grid>, Grid)]) -> Grid {
+        let mut next = Grid::new(self.size + (self.size / n));
+        next.iterations = self.iterations + 1;
+        for row in 0..(self.size / n) {
+            for col in 0..(self.size / n) {
+                let idx = row * n * self.size + col * n;
                 let mut grid = Grid::new(n);
                 grid.load_from(idx, &self);
-                for &(ref rule, ref out) in rules {
-                    if grid.matches(rule) {
-                        outs.push(out);
+                for &(ref rules, ref out) in rules {
+                    for rule in rules {
+                        if grid == *rule {
+                            let m = n + 1;
+                            let s = next.size;
+                            next.set_from(
+                                row * m * s +
+                                col * m, out);
+                            break;
+                        }
                     }
                 }
             }
         }
-        self.bump_size(n);
-        let size = self.size;
-        let m = n+1;
-        for i in 0..(size / m) {
-            for j in 0..(size / m) {
-                self.set_from(i*m*size + j*m, outs.remove(0));
-            }
-        }
-        assert_eq!(outs.len(), 0);
+        next
     }
 }
+
+type Rules<'a> = &'a [(Vec<Grid>, Grid)];
 
 #[test]
 fn grid_interpret() {
     assert_eq!(Grid::interpret(".#/.#"), Grid {
         grid: BitVec(SmallVec::from(vec![0b1010])),
         size: 2,
+        iterations: 0,
     });
 }
 
@@ -321,31 +264,48 @@ fn grid_rotate90() {
     assert_eq!(input, Grid::interpret("../##"));
 }
 
-#[test]
-fn grid_bump_size_1() {
-    let mut grid = Grid::interpret("../.#");
-    grid.bump_size(2);
-    assert_eq!(grid, Grid::interpret(".../.#./..."));
-}
-
 fn eval(s: &str, iterations: usize) -> u32 {
-    let (rules_2, rules_3): (Vec<(Grid, Grid)>, _) = s.trim().lines().flat_map(|line| {
+    let (rules_2, rules_3): (Vec<(Vec<Grid>, Grid)>, _) = s.trim().lines().map(|line| {
         let mut parts = line.split(" => ");
-        let pattern = Grid::interpret(parts.next().unwrap());
+        let mut pattern = Grid::interpret(parts.next().unwrap());
         let output = Grid::interpret(parts.next().unwrap());
-        iter::once((pattern, output))
-    }).partition(|r| r.0.size == 2);
-    let mut state = Grid::interpret(INITIAL_PATTERN.trim());
-    for iteration in 0..iterations {
-        if state.size % 2 == 0 {
-            state.step(2, &rules_2);
-        } else {
-            assert!(state.size % 3 == 0);
-            state.step(3, &rules_3);
+        let mut patterns = Vec::with_capacity(1);
+        patterns.push(pattern.clone());
+        patterns.push(pattern.reversed_rows());
+        pattern.rotate_90(); // 90
+        patterns.push(pattern.clone());
+        patterns.push(pattern.reversed_rows());
+        pattern.rotate_90(); // 180
+        patterns.push(pattern.clone());
+        patterns.push(pattern.reversed_rows());
+        pattern.rotate_90(); // 270
+        patterns.push(pattern.clone());
+        patterns.push(pattern.reversed_rows());
+        (patterns, output)
+    }).partition(|r| r.0[0].size == 2);
+    let mut grids = vec![Grid::interpret(INITIAL_PATTERN.trim())];
+    let mut total = 0;
+    while let Some(grid) = grids.pop() {
+        if grid.iterations == iterations {
+            total += grid.grid.count_ones();
+            continue;
         }
-        println!("i = {}, size={}, elements={}", iteration, state.size, state.grid.0.len());
+        let state = grid.step(&rules_2, &rules_3);
+        if state.size == 3usize.pow(3) {
+            let m = 3usize.pow(2); // previous power of 3 from state.size
+            let mut next = vec![Grid::new(m); 9];
+            for row in 0..3 {
+                for col in 0..3 {
+                    next[row * 3 + col].load_from(row*m*state.size + col*m, &state);
+                    next[row * 3 + col].iterations = state.iterations;
+                }
+            }
+            grids.extend(next);
+        } else {
+            grids.push(state);
+        }
     }
-    state.grid.count_ones()
+    total
 }
 
 pub fn part1(s: &str) -> u32 {
