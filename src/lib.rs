@@ -1,5 +1,47 @@
+#![feature(conservative_impl_trait, i128_type, i128)]
+
 #[macro_use] extern crate failure;
 extern crate memchr;
+extern crate smallvec;
+
+mod bitvec;
+mod matrix;
+pub use bitvec::BitVec;
+pub use matrix::{Grid, Matrix};
+
+pub trait VecLike<T: Default + Copy + Clone>: Clone + std::fmt::Debug {
+    fn new() -> Self;
+    fn with_capacity(n: usize) -> Self;
+    fn insert(&mut self, i: usize, v: T);
+    fn set(&mut self, i: usize, v: T);
+    fn get(&self, i: usize) -> T;
+}
+
+impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
+    fn new() -> Self {
+        Vec::new()
+    }
+
+    fn with_capacity(n: usize) -> Self {
+        Vec::with_capacity(n)
+    }
+
+    fn insert(&mut self, i: usize, v: T) {
+        self.insert(i, v);
+    }
+
+    fn set(&mut self, i: usize, v: T) {
+        while i >= self.len() {
+            self.push(T::default());
+        }
+        self[i] = v;
+    }
+
+    fn get(&self, i: usize) -> T {
+        self.as_slice().get(i).cloned().unwrap_or_default()
+    }
+}
+
 
 use memchr::memchr;
 use memchr::memchr2;
