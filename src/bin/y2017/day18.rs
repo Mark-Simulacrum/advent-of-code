@@ -1,24 +1,24 @@
 use std::collections::VecDeque;
 
-fn to_register(ch: char) -> usize {
+pub fn to_register(ch: char) -> usize {
     (ch as u8 - b'a') as usize
 }
 
 #[derive(Debug, Copy, Clone)]
-enum Value {
+pub enum Value {
     Register(usize),
     Value(i64),
 }
 
 impl Value {
-    fn resolve(self, registers: &[i64; 26]) -> i64 {
+    pub fn resolve(self, registers: &[i64]) -> i64 {
         match self {
             Value::Register(reg) => registers[reg],
             Value::Value(val) => val,
         }
     }
 
-    fn parse(s: &str) -> Value {
+    pub fn parse(s: &str) -> Value {
         match s.parse::<i64>().ok() {
             Some(val) => Value::Value(val),
             None => Value::Register(to_register(s.as_bytes()[0] as char)),
