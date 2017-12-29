@@ -55,6 +55,12 @@ impl<T: Copy + Default, C: VecLike<T>> Grid<T, C> {
     }
 }
 
+impl Grid<bool, BitVec> {
+    pub fn count_set(&self) -> u32 {
+        self.matrix.count_set()
+    }
+}
+
 impl<C: VecLike<bool>> fmt::Debug for Grid<bool, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", DebugMatrix(&self.matrix, "\n"))
