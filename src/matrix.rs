@@ -81,6 +81,12 @@ impl Matrix<bool, BitVec> {
     }
 }
 
+impl Matrix<bool, BitVec> {
+    pub fn interpret_bool(pattern: &str) -> Self {
+        Matrix::interpret(pattern, false, true)
+    }
+}
+
 impl<T, C> Matrix<T, C>
 where
     T: Copy + Default,
@@ -254,28 +260,28 @@ fn matrix_interpret() {
     let mut matrix = Matrix::new(2, 2);
     matrix.set(0, 1, true);
     matrix.set(1, 1, true);
-    assert_eq!(Matrix::interpret(".#/.#"), matrix);
+    assert_eq!(Matrix::interpret_bool(".#/.#"), matrix);
 }
 
 #[test]
 fn matrix_reverse_rows() {
-    let mut input = Matrix::interpret(".#/.#");
+    let mut input = Matrix::interpret_bool(".#/.#");
     input.reverse_rows();
-    assert_eq!(input, Matrix::interpret("#./#."));
+    assert_eq!(input, Matrix::interpret_bool("#./#."));
 }
 
 #[test]
 fn matrix_transpose() {
-    let mut input = Matrix::interpret(".#/.#");
+    let mut input = Matrix::interpret_bool(".#/.#");
     input.transpose();
-    assert_eq!(input, Matrix::interpret("../##"));
+    assert_eq!(input, Matrix::interpret_bool("../##"));
 }
 
 #[test]
 fn matrix_rotate90() {
-    let mut input = Matrix::interpret(".#/.#");
+    let mut input = Matrix::interpret_bool(".#/.#");
     input.rotate_90();
-    assert_eq!(input, Matrix::interpret("../##"));
+    assert_eq!(input, Matrix::interpret_bool("../##"));
 }
 
 struct DebugMatrix<'a, 'b, T: 'a, C: 'a>(&'a Matrix<T, C>, &'b str);
@@ -311,29 +317,29 @@ impl<'a, 'b, C: VecLike<bool>> fmt::Debug for DebugMatrix<'a, 'b, bool, C> {
 
 #[test]
 fn matrix_dbg_1() {
-    assert_eq!(format!("{:?}", Matrix::interpret("../..")), "../..");
+    assert_eq!(format!("{:?}", Matrix::interpret_bool("../..")), "../..");
 }
 
 #[test]
 fn matrix_dbg_2() {
-    assert_eq!(format!("{:?}", Matrix::interpret(".#/#.")), ".#/#.");
+    assert_eq!(format!("{:?}", Matrix::interpret_bool(".#/#.")), ".#/#.");
 }
 
 #[test]
 fn matrix_dbg_3() {
-    assert_eq!(format!("{:?}", Matrix::interpret(".#./..#/...")), ".#./..#/...");
+    assert_eq!(format!("{:?}", Matrix::interpret_bool(".#./..#/...")), ".#./..#/...");
 }
 
 #[test]
 fn matrix_insert_left() {
-    let mut m = Matrix::interpret(".#/##");
+    let mut m = Matrix::interpret_bool(".#/##");
     m.insert_column_left();
-    assert_eq!(m, Matrix::interpret("..#/.##"));
+    assert_eq!(m, Matrix::interpret_bool("..#/.##"));
 }
 
 #[test]
 fn matrix_insert_left_1() {
-    let mut m = Matrix::interpret("
+    let mut m = Matrix::interpret_bool("
 ....#..#.
 ....#..#.
 ....#..#.
@@ -348,7 +354,7 @@ fn matrix_insert_left_1() {
 ....#..#.
 ");
     m.insert_column_left();
-    assert_eq!(m, Matrix::interpret("
+    assert_eq!(m, Matrix::interpret_bool("
 .....#..#.
 .....#..#.
 .....#..#.
@@ -367,14 +373,14 @@ fn matrix_insert_left_1() {
 
 #[test]
 fn matrix_insert_right() {
-    let mut m = Matrix::interpret(".#/##");
+    let mut m = Matrix::interpret_bool(".#/##");
     m.insert_column_right();
-    assert_eq!(m, Matrix::interpret(".#./##."));
+    assert_eq!(m, Matrix::interpret_bool(".#./##."));
 }
 
 #[test]
 fn matrix_insert_right_1() {
-    let mut m = Matrix::interpret("
+    let mut m = Matrix::interpret_bool("
 ....#..#.
 ....#..#.
 ....#..#.
@@ -389,7 +395,7 @@ fn matrix_insert_right_1() {
 ....#..#.
 ");
     m.insert_column_right();
-    assert_eq!(m, Matrix::interpret("
+    assert_eq!(m, Matrix::interpret_bool("
 ....#..#..
 ....#..#..
 ....#..#..
@@ -407,14 +413,14 @@ fn matrix_insert_right_1() {
 
 #[test]
 fn matrix_insert_row_top() {
-    let mut m = Matrix::interpret(".#/##");
+    let mut m = Matrix::interpret_bool(".#/##");
     m.insert_row_top();
-    assert_eq!(m, Matrix::interpret("../.#/##"));
+    assert_eq!(m, Matrix::interpret_bool("../.#/##"));
 }
 
 #[test]
 fn matrix_insert_row_top_1() {
-    let mut m = Matrix::interpret("
+    let mut m = Matrix::interpret_bool("
 ....#..#.
 ....#..#.
 ....#..#.
@@ -429,7 +435,7 @@ fn matrix_insert_row_top_1() {
 ....#..#.
 ");
     m.insert_row_top();
-    assert_eq!(m, Matrix::interpret("
+    assert_eq!(m, Matrix::interpret_bool("
 .........
 ....#..#.
 ....#..#.

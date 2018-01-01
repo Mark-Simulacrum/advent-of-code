@@ -1,8 +1,9 @@
 #[cfg(test)]
 use quickcheck::TestResult;
+use advent_of_code::swap;
 
 pub fn part1(input: &str) -> usize {
-    let input = input.split(",").map(|x| x.parse::<usize>().unwrap()).collect::<Vec<_>>();
+    let input = input.split(',').map(|x| x.parse::<usize>().unwrap()).collect::<Vec<_>>();
     let mut list = (0..256).into_iter().collect::<Vec<usize>>();
     let mut cur = 0;
     let mut skip = 0;
@@ -35,16 +36,6 @@ pub fn knot_hash(input: &str) -> u128 {
     dense.to_be()
 }
 
-#[inline(always)]
-fn add(i: usize, n: usize, constraint: usize) -> usize {
-    if constraint == 0 { return 0; }
-    let mut tot = i + n;
-    while tot >= constraint {
-        tot -= constraint;
-    }
-    tot
-}
-
 fn reverse_after<T>(slice: &mut [T], a: usize, length: usize) {
     if a + length <= slice.len() {
         slice[a..(a + length)].reverse();
@@ -53,7 +44,7 @@ fn reverse_after<T>(slice: &mut [T], a: usize, length: usize) {
         let mut from = a;
         let mut to = length - (slice.len() - a) - 1;
         while idx < (length / 2) {
-            slice.swap(from, to);
+            unsafe { swap(slice, from, to); }
             from += 1;
             if from == slice.len() {
                 from = 0;
@@ -101,7 +92,7 @@ fn circle_rev_2() {
 fn run(list: &mut [usize], cur: &mut usize, skip: &mut usize, lengths: &[usize]) {
     for &len in lengths {
         reverse_after(list, *cur, len);
-        *cur = add(*cur, len + *skip, list.len());
+        *cur = (*cur + len + *skip) % list.len();
         *skip += 1;
     }
 }

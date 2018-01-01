@@ -1,11 +1,5 @@
 use std::mem;
-use std::ptr;
-
-unsafe fn swap<T>(slice: &mut [T], a: usize, b: usize) {
-    let a: *mut T = slice.get_unchecked_mut(a);
-    let b: *mut T = slice.get_unchecked_mut(b);
-    ptr::swap(a, b)
-}
+use advent_of_code::swap;
 
 fn eval(dancers: &mut [u8], instructions: &[Instruction]) {
     for &instr in instructions {

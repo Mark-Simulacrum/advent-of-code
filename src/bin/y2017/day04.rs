@@ -1,6 +1,8 @@
+use smallvec::SmallVec;
+
 fn is_valid_part1(s: &str) -> bool {
     let mut words = Vec::new();
-    for word in s.split_whitespace() {
+    for word in s.split(' ') {
         if words.contains(&word) {
             return false;
         } else {
@@ -12,8 +14,8 @@ fn is_valid_part1(s: &str) -> bool {
 
 fn is_valid_part2(s: &str) -> bool {
     let mut words = Vec::new();
-    for word in s.split_whitespace() {
-        let mut word = word.chars().collect::<Vec<_>>();
+    for word in s.split(' ') {
+        let mut word = SmallVec::<[_; 10]>::from(word.as_bytes());
         word.sort_unstable();
         if words.contains(&word) {
             return false;

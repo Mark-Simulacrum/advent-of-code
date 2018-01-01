@@ -3,14 +3,13 @@ fn eval<F: Fn(isize) -> isize>(i: &[isize], f: F) -> usize {
     let mut idx = 0isize;
     let mut jumps = 0;
     let len = nums.len() as isize;
-    let ptr = nums.as_mut_ptr();
     unsafe {
         while idx >= 0 && idx < len {
-            let offset = ptr.offset(idx);
-            let offset_value = *offset;
-            idx = idx + offset_value;
+            let cell = nums.get_unchecked_mut(idx as usize);
+            let offset = *cell;
+            idx = idx + offset;
             jumps += 1;
-            *offset = offset_value + f(offset_value);
+            *cell = offset + f(offset);
         }
     }
     jumps

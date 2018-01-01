@@ -17,7 +17,6 @@ pub fn part2(s: &str) -> i32 {
     for dir in s.split(',') {
         pos.go(dir);
         max_dist = cmp::max(max_dist, pos.distance());
-
     }
     max_dist
 }

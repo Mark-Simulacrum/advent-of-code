@@ -39,7 +39,7 @@ pub fn part1(n: usize) -> usize {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-struct Position(i64, i64);
+struct Position(i16, i16);
 
 impl Position {
     fn go(mut self, step: Step) -> Self {
@@ -54,7 +54,7 @@ impl Position {
 }
 
 pub fn part2(n: usize) -> usize {
-    let mut squares: Vec<(Position, u64)> = Vec::with_capacity(n);
+    let mut squares: Vec<(Position, u64)> = Vec::new();
     let mut position = Position(0, 0);
     let mut i = 1;
     let mut cur = 1;
@@ -65,7 +65,7 @@ pub fn part2(n: usize) -> usize {
     let mut last_loop_start = 0usize;
     loop {
         let mut value = 0;
-        let to_find = &[
+        let to_find = [
             position.go(Step::Right),
             position.go(Step::Up),
             position.go(Step::Down),

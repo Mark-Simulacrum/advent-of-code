@@ -3,7 +3,7 @@ fn max(list: &[u32]) -> (usize, u32) {
     let mut max_idx = 0;
     let mut idx = list.len() - 1;
     loop {
-        let i = list[idx];
+        let i = unsafe { *list.get_unchecked(idx) };
         if i >= max {
             max_idx = idx;
             max = i;
@@ -15,17 +15,19 @@ fn max(list: &[u32]) -> (usize, u32) {
 }
 
 // step
-fn f(blocks: &mut [u32]) -> &mut [u32] {
-    let (max_pos, mut max) = max(&*blocks);
-    blocks[max_pos] = 0;
-    let mut j = 0;
-    let len = blocks.len();
-    while max > 0 {
-        blocks[(max_pos + j + 1) % len] += 1;
-        max -= 1;
-        j += 1;
+fn f(list: &mut [u32]) -> &mut [u32] {
+    unsafe {
+        let (max_pos, mut max) = max(&*list);
+        *list.get_unchecked_mut(max_pos) = 0;
+        let mut j = 1;
+        let len = list.len();
+        while max > 0 {
+            *list.get_unchecked_mut((max_pos + j) % len) += 1;
+            max -= 1;
+            j += 1;
+        }
+        list
     }
-    blocks
 }
 
 fn exec(s: &[u32]) -> (usize, usize) {
@@ -42,7 +44,7 @@ fn exec(s: &[u32]) -> (usize, usize) {
     }
 
     let mut mu = 0;
-    let mut tortoise_0 = x0.clone();
+    let mut tortoise_0 = x0;
     let tortoise = &mut tortoise_0[..];
     while tortoise != hare {
         f(tortoise);

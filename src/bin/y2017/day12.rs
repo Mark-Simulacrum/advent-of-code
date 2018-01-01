@@ -1,11 +1,14 @@
 use petgraph::{Undirected, Graph};
 use petgraph::graph::NodeIndex;
 use petgraph::visit::{Dfs, Walker};
-use petgraph::algo::tarjan_scc;
+use petgraph::visit::{IntoNodeIdentifiers, IntoNeighbors, NodeIndexable};
+
+use std::cmp::min;
 use std::collections::HashMap;
 
 fn build_graph(s: &str) -> (Graph<u32, (), Undirected>, HashMap<u32, NodeIndex>) {
-    let mut nodes = HashMap::with_capacity(s.lines().count());
+    let c = s.lines().count();
+    let mut nodes = HashMap::with_capacity(c);
     let mut graph = Graph::new_undirected();
     let mut id = 0;
     for l in s.trim().lines() {
@@ -34,7 +37,96 @@ pub fn part1(s: &str) -> usize {
 
 pub fn part2(s: &str) -> usize {
     let (graph, _) = build_graph(s);
-    tarjan_scc(&graph).len()
+    tarjan_scc(&graph)
+}
+
+// Return the quantity of connected groups
+pub fn tarjan_scc<G>(g: G) -> usize
+    where G: IntoNodeIdentifiers + IntoNeighbors + NodeIndexable
+{
+    #[derive(Copy, Clone)]
+    #[derive(Debug)]
+    struct NodeData {
+        index: Option<usize>,
+        lowlink: usize,
+        on_stack: bool,
+    }
+
+    #[derive(Debug)]
+    struct Data<'a, G>
+        where G: NodeIndexable,
+          G::NodeId: 'a
+    {
+        index: usize,
+        nodes: Vec<NodeData>,
+        stack: Vec<G::NodeId>,
+        sccs: &'a mut usize,
+    }
+
+    fn scc_visit<G>(v: G::NodeId, g: G, data: &mut Data<G>)
+        where G: IntoNeighbors + NodeIndexable
+    {
+        macro_rules! node {
+            ($node:expr) => (data.nodes[g.to_index($node)])
+        }
+
+        if node![v].index.is_some() {
+            // already visited
+            return;
+        }
+
+        let v_index = data.index;
+        node![v].index = Some(v_index);
+        node![v].lowlink = v_index;
+        node![v].on_stack = true;
+        data.stack.push(v);
+        data.index += 1;
+
+        for w in g.neighbors(v) {
+            match node![w].index {
+                None => {
+                    scc_visit(w, g, data);
+                    node![v].lowlink = min(node![v].lowlink, node![w].lowlink);
+                }
+                Some(w_index) => {
+                    if node![w].on_stack {
+                        // Successor w is in stack S and hence in the current SCC
+                        let v_lowlink = &mut node![v].lowlink;
+                        *v_lowlink = min(*v_lowlink, w_index);
+                    }
+                }
+            }
+        }
+
+        // If v is a root node, pop the stack and generate an SCC
+        if let Some(v_index) = node![v].index {
+            if node![v].lowlink == v_index {
+                loop {
+                    let w = data.stack.pop().unwrap();
+                    node![w].on_stack = false;
+                    if g.to_index(w) == g.to_index(v) { break; }
+                }
+                *data.sccs += 1;
+            }
+        }
+    }
+
+    let mut sccs = 0;
+    {
+        let map = vec![NodeData { index: None, lowlink: !0, on_stack: false }; g.node_bound()];
+
+        let mut data = Data {
+            index: 0,
+            nodes: map,
+            stack: Vec::new(),
+            sccs: &mut sccs,
+        };
+
+        for n in g.node_identifiers() {
+            scc_visit(n, g, &mut data);
+        }
+    }
+    sccs
 }
 
 #[test]

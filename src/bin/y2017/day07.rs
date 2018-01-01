@@ -1,7 +1,7 @@
 use petgraph::Graph;
-use petgraph::Outgoing;
+use petgraph::{Incoming, Outgoing};
 use petgraph::graph::NodeIndex;
-use petgraph::visit::{Topo, Dfs};
+use petgraph::visit::Dfs;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
@@ -44,8 +44,9 @@ fn build_graph(input: &str) -> Graph<Node, ()> {
 	    let (head, weight, tails) = parse_line(line);
 	    let head_idx = match nodes.entry(head) {
 	        Entry::Occupied(occ) => {
-	            graph[*occ.get()].weight = Some(weight);
-	            *occ.get()
+	            let x = *occ.get();
+	            graph[x].weight = Some(weight);
+                x
             }
             Entry::Vacant(vac) => {
                 *vac.insert(graph.add_node(Node {
@@ -64,21 +65,21 @@ fn build_graph(input: &str) -> Graph<Node, ()> {
     graph
 }
 
-fn parse_line<'a>(line: &'a str) -> (&'a str, usize, impl Iterator<Item=&'a str> + 'a) {
-    let line = line.trim();
-    let mut splits = line.splitn(2, " -> ");
-    let a = splits.next().unwrap().trim();
-    let b = splits.next();
-    let mut head_part = a.split(" ");
+fn parse_line<'a>(line: &'a str) -> (&'a str, usize, impl Iterator<Item=&'a str>) {
+    let (a, b) = match line.find(" -> ") {
+        Some(arrow_idx) => (&line[0..arrow_idx], &line[arrow_idx + " -> ".len()..]),
+        None => (line, ""),
+    };
+    let mut head_part = a.split(' ');
     let head = head_part.next().unwrap();
     let weight = head_part.next().unwrap();
     let weight = weight[1..weight.len() - 1].parse::<usize>().unwrap();
-    let new_tails = b.unwrap_or("").trim().split(", ").filter(|x| !x.is_empty());
+    let new_tails = b.trim().split(", ").filter(|x| !x.is_empty());
     (head, weight, new_tails)
 }
 
 fn root_node(graph: &Graph<Node, ()>) -> NodeIndex {
-    Topo::new(&graph).next(&graph).unwrap()
+    graph.externals(Incoming).next().unwrap()
 }
 
 fn weight_for_node(graph: &Graph<Node, ()>, node: NodeIndex) -> usize {
@@ -107,15 +108,20 @@ fn unbalanced_at(graph: &Graph<Node, ()>, node: NodeIndex) -> Option<(NodeIndex,
     None
 }
 
+#[bench]
+fn parse_b(b: &mut ::test::Bencher) {
+    b.iter(|| build_graph(INPUT));
+}
+
 #[test]
 fn part1_1() {
     // c -> e -> a
     assert_eq!(part1("
-    b (00)
-    foo (00)
-    e (00) -> foo
-    c (00) -> a
-    a (00) -> b, e
+b (00)
+foo (00)
+e (00) -> foo
+c (00) -> a
+a (00) -> b, e
     "), "c");
 }
 
@@ -126,19 +132,20 @@ fn part1_actual() {
 
 #[test]
 fn part2_1() {
-    assert_eq!(part2("pbga (66)
-    xhth (57)
-    ebii (61)
-    havc (66)
-    ktlj (57)
-    fwft (72) -> ktlj, cntj, xhth
-    qoyq (66)
-    padx (45) -> pbga, havc, qoyq
-    tknk (41) -> ugml, padx, fwft
-    jptl (61)
-    ugml (68) -> gyxo, ebii, jptl
-    gyxo (61)
-    cntj (57)"), 60);
+    assert_eq!(part2("
+pbga (66)
+xhth (57)
+ebii (61)
+havc (66)
+ktlj (57)
+fwft (72) -> ktlj, cntj, xhth
+qoyq (66)
+padx (45) -> pbga, havc, qoyq
+tknk (41) -> ugml, padx, fwft
+jptl (61)
+ugml (68) -> gyxo, ebii, jptl
+gyxo (61)
+cntj (57)"), 60);
 }
 
 #[test]

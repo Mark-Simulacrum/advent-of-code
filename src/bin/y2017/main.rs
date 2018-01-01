@@ -8,6 +8,7 @@ extern crate quickcheck;
 extern crate smallvec;
 extern crate petgraph;
 extern crate memchr;
+extern crate itertools;
 extern crate primal;
 
 gen!(day01, day02, day03, day04, day05, day06, day07, day08, day09, day10,

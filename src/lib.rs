@@ -4,6 +4,8 @@
 extern crate memchr;
 extern crate smallvec;
 
+use std::ptr;
+
 mod bitvec;
 mod matrix;
 pub use bitvec::BitVec;
@@ -42,6 +44,76 @@ impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
     }
 }
 
+#[derive(Clone, PartialEq, Eq)]
+pub struct VecMap<K, V> {
+    v: Vec<(K, V)>,
+}
+
+impl<K, V> VecMap<K, V>
+where
+    K: PartialEq<K>,
+{
+    pub fn new() -> Self {
+        VecMap { v: Vec::new() }
+    }
+
+    pub fn with_capacity(cap: usize) -> Self {
+        VecMap { v: Vec::with_capacity(cap) }
+    }
+
+    pub fn insert(&mut self, key: K, value: V) {
+        match self.v.iter().position(|e| e.0 == key) {
+            Some(old) => {
+                self.v[old] = (key, value);
+            }
+            None => {
+                self.v.push((key, value));
+            }
+        }
+    }
+
+    pub fn get(&self, key: K) -> Option<&V> {
+        self.v.iter().find(|e| e.0 == key).map(|v| &v.1)
+    }
+
+    pub fn get_or_insert(&mut self, key: K, value: V) -> &mut V {
+        match self.v.iter().position(|e| e.0 == key) {
+            Some(old) => {
+                &mut self.v[old].1
+            }
+            None => {
+                self.v.push((key, value));
+                &mut self.v.last_mut().unwrap().1
+            }
+        }
+    }
+
+    pub fn get_or_insert_with<F: FnOnce() -> V>(&mut self, key: K, value: F) -> &mut V {
+        match self.v.iter().position(|e| e.0 == key) {
+            Some(old) => {
+                &mut self.v[old].1
+            }
+            None => {
+                self.v.push((key, value()));
+                &mut self.v.last_mut().unwrap().1
+            }
+        }
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item=(K, V)> {
+        self.v.into_iter()
+    }
+
+    pub fn values<'a>(&'a self) -> impl Iterator<Item=&'a V> + 'a {
+        self.v.iter().map(|v| &v.1)
+    }
+}
+
+pub unsafe fn swap<T>(slice: &mut [T], a: usize, b: usize) {
+    let a: *mut T = slice.get_unchecked_mut(a);
+    let b: *mut T = slice.get_unchecked_mut(b);
+    ptr::swap(a, b)
+}
 
 use memchr::memchr;
 use memchr::memchr2;

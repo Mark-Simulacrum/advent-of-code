@@ -1,3 +1,8 @@
+use advent_of_code::VecMap;
+#[allow(unused)]
+use itertools::Itertools;
+use std::fmt;
+
 #[derive(Copy, Clone, Debug)]
 struct Layer {
     depth: u8,
@@ -17,6 +22,8 @@ impl Layers {
             let mut items = l.split(": ");
             let depth = items.next().unwrap().parse::<u8>().unwrap();
             let range = items.next().unwrap().parse::<u8>().unwrap();
+            let l = layers.len();
+            layers.reserve(depth as usize - l);
             while depth as usize != layers.len() {
                 let l = layers.len();
                 layers.push(Layer { depth: l as u8, range: 0 });
@@ -48,29 +55,176 @@ pub fn part1(s: &str) -> usize {
     Layers::parse(s).run()
 }
 
+fn modulo(a: i128, b: i128) -> u64 {
+    let mut ret = a % b;
+    if ret < 0 {
+        ret += b;
+    }
+    ret as u64
+}
+
+// Algorithm taken from
+// https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Pseudocode.
+#[allow(unused)]
+
+#[derive(Copy, Clone)]
+struct ExtendedGcd {
+    gcd: i128,
+    m: i128,
+    n: i128,
+}
+
+impl ExtendedGcd {
+    fn new(a: i128, b: i128) -> ExtendedGcd {
+        let mut s = 0;
+        let mut old_s = 1;
+        let mut t = 1;
+        let mut old_t = 0;
+        let mut r = b;
+        let mut old_r = a;
+        while r != 0 {
+            let q = old_r / r;
+            let r1 = r;
+            let s1 = s;
+            let t1 = t;
+            r = old_r - q * r;
+            s = old_s - q * s;
+            t = old_t - q * t;
+            old_r = r1;
+            old_s = s1;
+            old_t = t1;
+        }
+        ExtendedGcd {
+            gcd: old_r,
+            m: old_s,
+            n: old_t,
+        }
+    }
+}
+
+#[allow(unused)]
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    let mut d = 0;
+    while a % 2 == 0 && b % 2 == 0 {
+        a /= 2;
+        b /= 2;
+        d += 1;
+    }
+    while a != b {
+        if a % 2 == 0 {
+            a /= 2;
+        } else if b % 2 == 0 {
+            b /= 2;
+        } else if a > b {
+            a = (a - b) / 2;
+        } else {
+            b = (b - a) / 2;
+        }
+    }
+    a * 2u64.pow(d)
+}
+
+// x % range != 0
+// a ≡ b mod n
+// => a mod n == b mod n
+//
+// Normally, we have a set of congruence relations
+// (delay + depth) = 0 (mod range), but we can simplify:
+// (delay + depth) ≡ 0 (mod range)
+// delay ≡ -depth (mod range)
+// delay (mod range) = -depth (mod range)
+//
+// This reduces the number of modulos we need to take for a given delay,
+// and as such, enhances runtime for relatively little bookkeeping cost.
+//
+// Since we have a system of inequalities, and the Chinese Remainder Theorem
+// applies to equalities, we invert the inequality, instead generating a set
+// of integers which delay % range should equal.
+//
+// range: [possible modulos]
+// 2: [0]
+// 4: [1, 2, 3]
+//
+// x = 0 mod 2
+// and
+// x = 1 mod 4 OR
+// x = 2 mod 4 OR
+// x = 3 mod 4
+//
+// This means we have 3 different systems to solve.
+
+#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
+struct Congruence {
+    a: i128,
+    n: i128,
+}
+
+impl fmt::Debug for Congruence {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} mod {}", self.a, self.n)
+    }
+}
+
+impl Congruence {
+    // See https://math.stackexchange.com/questions/911902/
+    fn combine(self, other: Congruence) -> Option<Congruence> {
+        let ExtendedGcd { gcd, m, n } = ExtendedGcd::new(self.n, other.n);
+        if modulo(self.a, gcd) == modulo(other.a, gcd) {
+            let lcm = (self.n*other.n) / gcd;
+            let ret = Congruence {
+                n: lcm,
+                a: (other.a * m * self.n + self.a * n * other.n) / gcd,
+            }.normalize();
+            Some(ret)
+        } else {
+            None
+        }
+    }
+
+    fn normalize(self) -> Congruence {
+        let mut a = self.a;
+        a -= (a / self.n) * self.n;
+        if a < 0 {
+            a += (a.abs() / self.n + 1) * self.n;
+        }
+        Congruence { n: self.n, a }
+    }
+}
+
 pub fn part2(s: &str) -> u64 {
     let layers = Layers::parse(s);
-    let mut ranges = layers.layers.iter()
+    let ranges = layers.layers.iter()
         .enumerate()
         .filter(|&(_, l)| l.range != 0)
         .map(|(i, l)| (i as u64, (l.range as u64) * 2))
+        .map(|(d, r)| Congruence { n: r as i128, a: modulo(-(d as i128), r as i128) as i128 })
         .collect::<Vec<_>>();
-    ranges.sort_by_key(|&(_, r)| r);
-    for delay in 0u64.. {
-        let mut caught = false;
-        for &(i, range) in &ranges {
-            if (delay + i) % range == 0 {
-                caught = true;
-                break;
+    let mut ranges_map = VecMap::with_capacity(ranges.len());
+    for &Congruence { n: range, a: x } in &ranges {
+        ranges_map.get_or_insert_with(range, Vec::new).push(x as u8);
+    }
+    let mut system = ranges_map.into_iter().map(|(range, xs)| {
+        (0..range as u8).into_iter().filter(|n| !xs.contains(n))
+            .map(|x| Congruence { n: range, a: x as i128 }).collect::<Vec<_>>()
+    }).collect::<Vec<_>>();
+    system.sort_by_key(|c| c[0].n);
+    while system.len() >= 2 {
+        let mut solutions = Vec::with_capacity(system[0].len() * system[1].len());
+        for a in &system[0] {
+            for b in &system[1] {
+                if let Some(combined) = a.combine(*b) {
+                    solutions.push(combined);
+                }
             }
         }
-        if !caught {
-            return delay;
-        }
+        assert!(!solutions.is_empty(), "{:?} and {:?} has no solutions", system[0], system[1]);
+        solutions.sort_unstable();
+        solutions.dedup();
+        system[0] = solutions;
+        system.remove(1);
     }
-    unreachable!()
+    system[0].iter().min_by_key(|x| x.a).unwrap().a as u64
 }
-
 
 #[test]
 fn part1_1() {
