@@ -2,10 +2,10 @@ use advent_of_code::VecMap;
 #[allow(unused)]
 use itertools::Itertools;
 use std::fmt;
+use std::iter;
 
 #[derive(Copy, Clone, Debug)]
 struct Layer {
-    depth: u8,
     range: u8,
 }
 
@@ -19,17 +19,12 @@ impl Layers {
     fn parse(s: &str) -> Layers {
         let mut layers = Vec::new();
         for l in s.trim().lines() {
-            let mut items = l.split(": ");
+            let mut items = l.split(':');
             let depth = items.next().unwrap().parse::<u8>().unwrap();
-            let range = items.next().unwrap().parse::<u8>().unwrap();
+            let range = items.next().unwrap()[1..].parse::<u8>().unwrap();
             let l = layers.len();
-            layers.reserve(depth as usize - l);
-            while depth as usize != layers.len() {
-                let l = layers.len();
-                layers.push(Layer { depth: l as u8, range: 0 });
-            }
+            layers.extend(iter::repeat(Layer { range: 0 }).take(depth as usize - l));
             layers.push(Layer {
-                depth,
                 range: range.saturating_sub(1),
             });
         }
@@ -38,11 +33,10 @@ impl Layers {
 
     fn run(&mut self) -> usize {
         let mut severity = 0;
-        for layer in self.layers.iter() {
+        for (depth, layer) in self.layers.iter().enumerate() {
             // multiply range by 2 for trip there and back again
-            let range = (layer.range as u64) * 2;
-            if range != 0 && self.scanner % range == 0 {
-                severity += layer.depth as usize * (layer.range as usize + 1);
+            if layer.range != 0 && self.scanner % (layer.range as u64 * 2) == 0 {
+                severity += depth * (layer.range as usize + 1);
             }
             self.scanner += 1;
         }
