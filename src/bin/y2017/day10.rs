@@ -22,7 +22,11 @@ pub fn knot_hash(input: &str) -> u128 {
     let mut cur = 0;
     let mut skip = 0;
     for _ in 0..64 {
-        run(&mut list, &mut cur, &mut skip, &input[..]);
+        for &len in &input {
+            reverse_after(&mut list, cur, len);
+            cur = (cur + len + skip) % list.len();
+            skip += 1;
+        }
     }
     let mut dense = 0u128;
     for i in 0..16 {
@@ -42,7 +46,7 @@ fn reverse_after<T>(slice: &mut [T], a: usize, length: usize) {
     } else {
         let mut idx = 0;
         let mut from = a;
-        let mut to = length - (slice.len() - a) - 1;
+        let mut to = a + length - slice.len() - 1;
         while idx < (length / 2) {
             unsafe { swap(slice, from, to); }
             from += 1;

@@ -1,4 +1,4 @@
-#![feature(conservative_impl_trait, i128_type, i128)]
+#![feature(swap_nonoverlapping, conservative_impl_trait, i128_type, i128)]
 
 #[macro_use] extern crate failure;
 extern crate memchr;
@@ -112,7 +112,7 @@ where
 pub unsafe fn swap<T>(slice: &mut [T], a: usize, b: usize) {
     let a: *mut T = slice.get_unchecked_mut(a);
     let b: *mut T = slice.get_unchecked_mut(b);
-    ptr::swap(a, b)
+    ptr::swap_nonoverlapping(a, b, 1)
 }
 
 use memchr::memchr;

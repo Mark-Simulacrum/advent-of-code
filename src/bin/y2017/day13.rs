@@ -123,7 +123,7 @@ fn gcd(mut a: u64, mut b: u64) -> u64 {
 // => a mod n == b mod n
 //
 // Normally, we have a set of congruence relations
-// (delay + depth) = 0 (mod range), but we can simplify:
+// (delay + depth) ≡ 0 (mod range), but we can simplify:
 // (delay + depth) ≡ 0 (mod range)
 // delay ≡ -depth (mod range)
 // delay (mod range) = -depth (mod range)

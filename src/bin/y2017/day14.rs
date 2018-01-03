@@ -5,23 +5,56 @@ pub fn part1(s: &str) -> u32 {
     parse_rows(s).iter().map(|r| r.count_ones()).sum()
 }
 
-fn wipe_region(rows: &mut [u128], row: usize, col: u8) -> u32 {
-    if row == rows.len() { return 0; }
-    if col > 127 { return 0; }
-    if rows[row] & (1u128 << col) == 0 { return 0; }
-    rows[row] &= !(1u128 << col);
-    wipe_region(rows, row, col.saturating_sub(1));
-    wipe_region(rows, row, col.saturating_add(1));
-    wipe_region(rows, row.saturating_add(1), col);
-    wipe_region(rows, row.saturating_sub(1), col);
-    1
+pub fn part2(s: &str) -> u32 {
+    let mut rows = parse_rows(s);
+    remove_groups(&mut rows)
+}
+
+fn get(rows: &[u128], pos: (usize, u8)) -> bool {
+    if pos.0 == rows.len() { return false; }
+    if pos.1 > 127 { return false; }
+    rows[pos.0] & (1u128 << pos.1) != 0
 }
 
 fn remove_groups(rows: &mut [u128]) -> u32 {
     let mut groups = 0;
-    for i in 0..rows.len() {
-        for j in 0..128 {
-            groups += wipe_region(rows, i, j);
+    let mut queue = Vec::new();
+    for row in 0..rows.len() {
+        for col in 0..128 {
+            if row == rows.len() { continue; }
+            if col > 127 { continue; }
+            if rows[row] & (1u128 << col) == 0 { continue; }
+            queue.push((row, col));
+            while let Some((row, col)) = queue.pop() {
+                let mut w = (row, col);
+                loop {
+                    w.1 += 1;
+                    if !get(&rows, w) {
+                        w.1 -= 1;
+                        break;
+                    }
+                }
+                let mut e = (row, col);
+                while e.1 > 0 {
+                    e.1 -= 1;
+                    if !get(&rows, e) {
+                        e.1 += 1;
+                        break;
+                    }
+                }
+                for col in e.1..(w.1 + 1) {
+                    rows[row] &= !(1u128 << col);
+                    let north = (row.saturating_sub(1), col);
+                    let south = (row.saturating_add(1), col);
+                    if get(&rows, north) {
+                        queue.push(north);
+                    }
+                    if get(&rows, south) {
+                        queue.push(south);
+                    }
+                }
+            }
+            groups += 1;
         }
     }
     groups
@@ -64,11 +97,6 @@ fn parse_rows(s: &str) -> [u128; 128] {
         rows[i as usize] = decimal;
     }
     rows
-}
-
-pub fn part2(s: &str) -> u32 {
-    let mut rows = parse_rows(s);
-    remove_groups(&mut rows)
 }
 
 #[test]
