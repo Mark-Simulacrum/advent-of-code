@@ -316,6 +316,7 @@ macro_rules! gen {
                         $day::part1($day::INPUT);
                     }
                 } else if concat!(stringify!($day), "::part2") == bench {
+                    println!("benching {}", bench);
                     for _ in 0..iters {
                         $day::part2($day::INPUT);
                     }

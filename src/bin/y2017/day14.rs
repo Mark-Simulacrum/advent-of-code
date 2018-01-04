@@ -23,7 +23,7 @@ fn remove_groups(rows: &mut [u128]) -> u32 {
         for col in 0..128 {
             if row == rows.len() { continue; }
             if col > 127 { continue; }
-            if rows[row] & (1u128 << col) == 0 { continue; }
+            if !get(&rows, (row, col)) { continue; }
             queue.push((row, col));
             while let Some((row, col)) = queue.pop() {
                 let mut w = (row, col);
