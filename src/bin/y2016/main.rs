@@ -1,6 +1,4 @@
-#![cfg_attr(test, feature(test))]
-#![feature(option_filter, drain_filter)]
-#[cfg(test)]
+#![feature(test, option_filter, drain_filter)]
 extern crate test;
 #[macro_use] extern crate advent_of_code;
 extern crate smallvec;

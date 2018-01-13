@@ -23,7 +23,9 @@ fn load<V: Copy + Default, C: VecLike<V>>(s: &str, empty: V, present: V) -> Grid
 
 #[derive(Copy, Clone, Debug)]
 enum Direction { Left, Right, Up, Down }
+
 impl Direction {
+    #[inline(always)]
     fn turn_right(self) -> Direction {
         match self {
             Direction::Up => Direction::Right,
@@ -33,6 +35,7 @@ impl Direction {
         }
     }
 
+    #[inline(always)]
     fn turn_left(self) -> Direction {
         match self {
             Direction::Up => Direction::Left,
@@ -51,6 +54,7 @@ impl Direction {
         }
     }
 
+    #[inline(always)]
     fn apply(self, pos: &mut (isize, isize)) {
         match self {
             Direction::Up => pos.1 -= 1,
@@ -67,12 +71,12 @@ pub fn part1(s: &str) -> usize {
     let mut dir = Direction::Up;
     let mut infections = 0;
     for _ in 0..10_000 {
-        if grid.get(pos.0, pos.1) {
-            grid.set(pos.0, pos.1, false);
+        let value = grid.get(pos.0, pos.1);
+        grid.set(pos.0, pos.1, !value);
+        if value {
             dir = dir.turn_right();
         } else {
             infections += 1;
-            grid.set(pos.0, pos.1, true);
             dir = dir.turn_left();
         }
         dir.apply(&mut pos);

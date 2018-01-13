@@ -12,6 +12,7 @@ petgraph = "0.4"
 memchr = "2.0"
 quickcheck = "0.5"
 primal = "0.2"
+fnv = "1.0"
 
 [[bin]]
 name = "y2016"

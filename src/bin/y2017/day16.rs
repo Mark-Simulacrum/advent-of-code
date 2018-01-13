@@ -7,19 +7,9 @@ fn eval(dancers: &mut [u8], instructions: &[Instruction]) {
             Instruction::Rotate(k) => dancers.rotate(k),
             Instruction::SwapPositions(a, b) => unsafe { swap(dancers, a, b) },
             Instruction::SwapDancers(a, b) => {
-                let mut pos = None;
-                for i in 0..dancers.len() {
-                    let dancer = dancers[i];
-                    let found = dancer == a || dancer == b;
-                    if pos.is_none() {
-                        if found {
-                            pos = Some(i);
-                        }
-                    } else if found {
-                        unsafe { swap(dancers, pos.unwrap(), i) };
-                        break;
-                    }
-                }
+                let pos0 = dancers.iter().position(|&v| v == a || v == b).unwrap();
+                let pos1 = pos0 + 1 + dancers[pos0 + 1..].iter().position(|&v| v == a || v == b).unwrap();
+                unsafe { swap(dancers, pos0, pos1); }
             }
         }
     }
@@ -44,15 +34,15 @@ fn parse(dancers: usize, instructions: &str) -> Vec<Instruction> {
                 None
             }
             b'x' => {
-                let mut nums = instr[1..].split("/").map(|n| n.parse::<usize>().unwrap());
+                let mut nums = instr[1..].split('/').map(|n| n.parse::<usize>().unwrap());
                 let mut a = (nums.next().unwrap() + rotated_by) % dancers;
                 let mut b = (nums.next().unwrap() + rotated_by) % dancers;
                 if a > b { mem::swap(&mut a, &mut b); }
                 Some(Instruction::SwapPositions(a, b))
             }
             b'p' => {
-                let a = instr.as_bytes()[1];
-                let b = instr.as_bytes()[3];
+                let mut a = instr.as_bytes()[1];
+                let mut b = instr.as_bytes()[3];
                 Some(Instruction::SwapDancers(a, b))
             }
             _ => unreachable!()
@@ -89,7 +79,7 @@ fn part1_1() {
     let mut dancers = *b"abcde";
     let instructions = parse(dancers.len(), "s1,x3/4,pe/b");
     eval(&mut dancers, &instructions);
-    assert_eq!(dancers, *b"baedc");
+    assert_eq!(::std::str::from_utf8(&dancers).unwrap(), "baedc");
 }
 
 #[test]

@@ -1,4 +1,4 @@
-#![feature(swap_nonoverlapping, conservative_impl_trait, i128_type, i128)]
+#![feature(test, swap_nonoverlapping, conservative_impl_trait, i128_type, i128)]
 
 #[macro_use] extern crate failure;
 extern crate memchr;
@@ -11,11 +11,14 @@ mod matrix;
 pub use bitvec::BitVec;
 pub use matrix::{Grid, Matrix};
 
+pub mod cycle;
+
 pub trait VecLike<T: Default + Copy + Clone>: Clone + std::fmt::Debug {
     fn new() -> Self;
     fn with_capacity(n: usize) -> Self;
     fn insert(&mut self, i: usize, v: T);
     fn set(&mut self, i: usize, v: T);
+    fn fill<I: Iterator<Item=T>>(&mut self, i: I);
     fn get(&self, i: usize) -> T;
 }
 
@@ -33,10 +36,14 @@ impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
     }
 
     fn set(&mut self, i: usize, v: T) {
-        while i >= self.len() {
-            self.push(T::default());
+        if i >= self.len() {
+            self.resize(i + 1, T::default());
         }
         self[i] = v;
+    }
+
+    fn fill<I: Iterator<Item=T>>(&mut self, i: I) {
+        *self = i.collect();
     }
 
     fn get(&self, i: usize) -> T {
@@ -311,14 +318,14 @@ macro_rules! gen {
             } else {
             $(
                 if concat!(stringify!($day), "::part1") == bench {
-                    println!("benching {}", bench);
+                    println!("benching {} {} times", bench, iters);
                     for _ in 0..iters {
-                        $day::part1($day::INPUT);
+                        ::test::black_box($day::part1($day::INPUT));
                     }
                 } else if concat!(stringify!($day), "::part2") == bench {
-                    println!("benching {}", bench);
+                    println!("benching {} {} times", bench, iters);
                     for _ in 0..iters {
-                        $day::part2($day::INPUT);
+                        ::test::black_box($day::part2($day::INPUT));
                     }
                 }
             )+

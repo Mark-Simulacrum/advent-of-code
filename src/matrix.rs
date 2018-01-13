@@ -33,11 +33,21 @@ impl<T: Copy + Default, C: VecLike<T>> Grid<T, C> {
     pub fn to_matrix(&mut self, x: isize, y: isize) -> (usize, usize) {
         while x < self.left_bound {
             self.matrix.insert_column_left();
-            self.left_bound -= 1;
+            self.matrix.insert_column_left();
+            self.matrix.insert_column_left();
+            self.matrix.insert_column_left();
+            self.matrix.insert_column_left();
+            self.matrix.insert_column_left();
+            self.left_bound -= 6;
         }
         while y < self.top_bound {
             self.matrix.insert_row_top();
-            self.top_bound -= 1;
+            self.matrix.insert_row_top();
+            self.matrix.insert_row_top();
+            self.matrix.insert_row_top();
+            self.matrix.insert_row_top();
+            self.matrix.insert_row_top();
+            self.top_bound -= 6;
         }
         let col = (x - self.left_bound) as usize;
         let row = (y - self.top_bound) as usize;
@@ -67,7 +77,7 @@ impl<C: VecLike<bool>> fmt::Debug for Grid<bool, C> {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Hash, Clone, PartialEq, Eq)]
 pub struct Matrix<T, C> {
     matrix: C,
     rows: usize,
@@ -180,15 +190,23 @@ where
         }
     }
 
-    pub fn set(&mut self, row: usize, col: usize, v: T) {
+    fn ensure_space(&mut self, row: usize, col: usize) {
         while row >= self.rows {
             self.insert_row_bottom();
         }
         while col >= self.cols {
             self.insert_column_right();
         }
-        assert!(col <= self.cols);
-        assert!(row <= self.rows);
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, v: T) {
+        self.ensure_space(row, col);
+        debug_assert!(col <= self.cols);
+        debug_assert!(row <= self.rows);
+        self.matrix.set(row*self.cols + col, v);
+    }
+
+    fn set_direct(&mut self, row: usize, col: usize, v: T) {
         self.matrix.set(row*self.cols + col, v);
     }
 
@@ -200,7 +218,7 @@ where
                 .map(|c| self.get(row, c).unwrap())
                 .collect::<SmallVec<[_; 5]>>();
             for (col, v) in x.into_iter().enumerate() {
-                matrix.set(col, row, v);
+                matrix.set_direct(col, row, v);
             }
         }
         *self = matrix;
@@ -214,7 +232,7 @@ where
                 .map(|c| self.get(row, c).unwrap())
                 .collect::<SmallVec<[_; 5]>>();
             for (i, v) in x.into_iter().enumerate() {
-                self.set(row, i, v);
+                self.set_direct(row, i, v);
             }
         }
     }
@@ -233,12 +251,12 @@ where
     // This loads from the other matrix, using our own indices as a basis for
     // how far to iterate.
     pub fn load_from(&mut self, start: usize, other: &Self) {
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let o = other.matrix.get(start + row*other.cols + col);
-                self.set(row, col, o);
-            }
-        }
+        let rows = self.rows;
+        let cols = self.cols;
+        self.matrix.fill(
+            (0..rows).into_iter()
+                .flat_map(|row| (0..cols).into_iter().map(move |col| (row, col)))
+                .map(|(row, col)| other.matrix.get(start + row*other.cols + col)));
     }
 
     // Loads from the other matrix, using it's indices to fill our own.  N.B.

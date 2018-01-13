@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashSet};
 
 pub fn part1(s: &str) -> usize {
     // Find the particle with the lowest acceleration, velocity, and position.
-    s.trim().lines().map(|x| Particle::parse(x)).enumerate().min_by(|&(_, a), &(_, b)| {
+    parse(s).enumerate().min_by(|&(_, a), &(_, b)| {
         a.a.mag_sq().cmp(&b.a.mag_sq())
         .then_with(|| {
             a.v.mag_sq().cmp(&b.v.mag_sq())
@@ -101,12 +101,12 @@ impl Solution {
     }
 }
 
-fn parse(s: &str) -> Vec<Particle> {
-    s.trim().lines().map(|x| Particle::parse(x)).collect::<Vec<_>>()
+fn parse<'a>(s: &'a str) -> impl Iterator<Item=Particle> + 'a {
+    s.trim().lines().map(|x| Particle::parse(x))
 }
 
 pub fn part2(s: &str) -> usize {
-    let particles = parse(s);
+    let particles = parse(s).collect::<Vec<_>>();
     let mut collisions = BTreeMap::new();
     for (i1, p1) in particles.iter().enumerate() {
         for (i2, p2) in particles.iter().enumerate() {

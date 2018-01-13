@@ -3,14 +3,16 @@ use std::mem;
 use std::fmt;
 use VecLike;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BitVec(SmallVec<[u64; 1]>);
 
 impl VecLike<bool> for BitVec {
+    #[inline(always)]
     fn new() -> Self {
         BitVec(SmallVec::from([0; 1]))
     }
 
+    #[inline(always)]
     fn with_capacity(n: usize) -> Self {
         BitVec(SmallVec::from_vec(vec![0; n / Self::BITS_PER_CELL]))
     }
@@ -24,11 +26,29 @@ impl VecLike<bool> for BitVec {
         let cell = self.get_cell_mut(i);
         let mask = 1u64 << Self::bit_in_cell(i);
         *cell &= !mask;
-        if v {
-            *cell |= mask;
+        *cell |= (v as u64) << Self::bit_in_cell(i);
+    }
+
+    fn fill<I: Iterator<Item=bool>>(&mut self, iter: I) {
+        let mut cell_idx = 0;
+        let mut value = 0;
+        let mut cleared = true;
+        for (idx, el) in iter.enumerate() {
+            cleared = false;
+            value |= (el as u64) << Self::bit_in_cell(idx);
+            if Self::cell_idx(idx) != cell_idx {
+                cleared = true;
+                *self.get_cell_idx_mut(cell_idx) = value;
+                cell_idx += 1;
+                value = 0;
+            }
+        }
+        if !cleared {
+            *self.get_cell_idx_mut(cell_idx) = value;
         }
     }
 
+    #[inline(always)]
     fn get(&self, i: usize) -> bool {
         (self.get_cell(i) & (1 << Self::bit_in_cell(i))) != 0
     }
@@ -41,38 +61,50 @@ impl BitVec {
     }
 
     fn get_cell_mut(&mut self, i: usize) -> &mut u64 {
-        let index = i / Self::BITS_PER_CELL;
+        let index = Self::cell_idx(i);
+        self.get_cell_idx_mut(index)
+    }
+
+    fn get_cell_idx_mut(&mut self, index: usize) -> &mut u64 {
         while index >= self.0.len() { self.0.push(0); }
         &mut self.0[index]
     }
 
     fn get_cell(&self, i: usize) -> u64 {
-        let index = i / Self::BITS_PER_CELL;
+        let index = Self::cell_idx(i);
         self.0.get(index).cloned().unwrap_or(0)
     }
 
+    fn get_cell_at_idx(&self, index: usize) -> u64 {
+        self.0.get(index).cloned().unwrap_or(0)
+    }
+
+    #[inline(always)]
+    fn cell_idx(i: usize) -> usize {
+        i / Self::BITS_PER_CELL
+    }
+
+    #[inline(always)]
     fn bit_in_cell(i: usize) -> usize {
         i % Self::BITS_PER_CELL
     }
 
     fn make_space_at(&mut self, i: usize) {
         let bit = Self::bit_in_cell(i);
-        let last_bit_in_cell = self.get_cell(i) >> 63 != 0;
-        let last_idx = i - bit + (Self::BITS_PER_CELL - 1);
-        let cell_idx = i / Self::BITS_PER_CELL;
+        let cell_idx = Self::cell_idx(i);
+        let last_bit_in_cell = self.get_cell_at_idx(cell_idx) >> 63 != 0;
         // We don't want to add new cells unless true, but we do want to shift
         // all cells over.  Therefore, if the next cell exists, then we should
         // shift into it.
         if last_bit_in_cell || cell_idx + 2 <= self.0.len() {
+            let last_idx = i - bit + (Self::BITS_PER_CELL - 1);
             self.insert(last_idx + 1, last_bit_in_cell);
         }
-        let right_mask = 2u64.pow(bit as u32) - 1;
-        let right = self.get_cell(i) & right_mask;
-        let left = self.get_cell(i) & !right_mask;
-        {
-            let cell = self.get_cell_mut(i);
-            *cell = (left << 1) | right;
-        }
+        let cell = self.get_cell_idx_mut(cell_idx);
+        let right_mask = (1 << bit) - 1;
+        let right = *cell & right_mask;
+        let left = *cell & !right_mask;
+        *cell = (left << 1) | right;
     }
 }
 

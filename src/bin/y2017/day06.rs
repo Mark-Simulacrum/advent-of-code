@@ -1,3 +1,5 @@
+use advent_of_code::cycle;
+
 fn max(list: &[u32]) -> (usize, u32) {
     let mut max = 0;
     let mut max_idx = 0;
@@ -14,8 +16,7 @@ fn max(list: &[u32]) -> (usize, u32) {
     (max_idx, max)
 }
 
-// step
-fn f(list: &mut [u32]) -> &mut [u32] {
+fn step(mut list: Vec<u32>) -> Vec<u32> {
     unsafe {
         let (max_pos, mut max) = max(&*list);
         *list.get_unchecked_mut(max_pos) = 0;
@@ -30,48 +31,15 @@ fn f(list: &mut [u32]) -> &mut [u32] {
     }
 }
 
-fn exec(s: &[u32]) -> (usize, usize) {
-    let x0 = Vec::from(s);
-
-    let mut tortoise_0 = x0.clone();
-    let mut hare_0 = x0.clone();
-
-    let tortoise = f(&mut tortoise_0);
-    let hare = f(f(&mut hare_0));
-    while tortoise != hare {
-        f(tortoise);
-        f(f(hare));
-    }
-
-    let mut mu = 0;
-    let mut tortoise_0 = x0;
-    let tortoise = &mut tortoise_0[..];
-    while tortoise != hare {
-        f(tortoise);
-        f(hare);
-        mu += 1;
-    }
-
-    let mut lam = 1;
-    let mut hare_0 = Vec::from(&*tortoise);
-    let hare = f(&mut hare_0);
-    while tortoise != hare {
-        f(hare);
-        lam += 1;
-    }
-
-    (lam, mu)
-}
-
 pub fn part1(s: &[u32]) -> usize {
-    let (a, b) = exec(s);
-    a + b
+    let cycle = cycle::find(s.to_vec(), step);
+    cycle.start() + cycle.length()
 }
 
 // How long ago did we see the looped state?
 pub fn part2(s: &[u32]) -> usize {
-    let (a, _) = exec(s);
-    a
+    let cycle = cycle::find(s.to_vec(), step);
+    cycle.length()
 }
 
 #[test]
