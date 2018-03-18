@@ -16,6 +16,10 @@ use itertools::Itertools;
 struct Executor {
     min_steps: usize,
     visited: HashSet<Floors>,
+    // We use a BinaryHeap here because it's critical that we visit states with less steps before
+    // states with more steps. Since we can reach an equivalent floorplan via more steps, if we
+    // traverse the potential states otherwise we may not visit the lower-step state before the
+    // floorplan-equivalent higher-step state, and as such forget about it.
     potential_states: BinaryHeap<State>,
 }
 
@@ -24,7 +28,7 @@ impl Executor {
         Executor {
             min_steps: usize::MAX,
             visited: HashSet::new(),
-            potential_states: BinaryHeap::new(),
+            potential_states: Default::default(),
         }
     }
 
@@ -85,7 +89,6 @@ fn exec(floors: Floors) -> usize {
             }
         }
     }
-    println!("visited: {:?}", executor.visited.len());
     executor.min_steps
 }
 
@@ -151,7 +154,10 @@ impl Floor {
         self.0.contains(Item::ELEVATOR)
     }
 
-    // -> (paired, unpaired chips, unpaired generators)
+    // Use the fact that any pair of (generator, microchip) is
+    // interchangeable. Therefore, floors should compare/hash as equivalent so
+    // long as the same quantity of pairs and the same non-paired items are on
+    // the floor.
     fn to_hashable(self) -> (u8, Item) {
         let generator = self.0 & Item::GENERATOR;
         let microchip = self.0.to_generator();
