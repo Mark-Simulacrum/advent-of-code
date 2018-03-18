@@ -34,7 +34,8 @@ pub fn part2(s: &str) -> i64 {
 }
 
 fn parse<T: FromStr>(v: &str) -> T
-    where T::Err: ::std::fmt::Debug,
+where
+    T::Err: ::std::fmt::Debug,
 {
     match v.parse() {
         Ok(v) => v,
@@ -45,7 +46,11 @@ fn parse<T: FromStr>(v: &str) -> T
 fn parse_line(line: &str) -> (&str, i64, &str, Condition) {
     let mut elements = line.split(' ');
     let register = elements.next().unwrap();
-    let sign = if elements.next().unwrap() == "inc" { 1 } else { -1 };
+    let sign = if elements.next().unwrap() == "inc" {
+        1
+    } else {
+        -1
+    };
     let num = sign * parse::<i64>(elements.next().unwrap());
     let _ = elements.next(); // if
     let condition_reg = elements.next().unwrap();
@@ -59,7 +64,15 @@ fn parse_line(line: &str) -> (&str, i64, &str, Condition) {
         s => panic!("Unexpected bytes: {:?} ({})", s, line),
     };
     let expected_value = parse::<i64>(elements.next().unwrap());
-    (register, num, condition_reg, Condition { op, value:  expected_value })
+    (
+        register,
+        num,
+        condition_reg,
+        Condition {
+            op,
+            value: expected_value,
+        },
+    )
 }
 
 #[derive(Copy, Clone, Debug)]

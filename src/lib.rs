@@ -1,6 +1,7 @@
 #![feature(test, swap_nonoverlapping, conservative_impl_trait, i128_type, i128)]
 
-#[macro_use] extern crate failure;
+#[macro_use]
+extern crate failure;
 extern crate memchr;
 extern crate smallvec;
 
@@ -18,7 +19,7 @@ pub trait VecLike<T: Default + Copy + Clone>: Clone + std::fmt::Debug {
     fn with_capacity(n: usize) -> Self;
     fn insert(&mut self, i: usize, v: T);
     fn set(&mut self, i: usize, v: T);
-    fn fill<I: Iterator<Item=T>>(&mut self, i: I);
+    fn fill<I: Iterator<Item = T>>(&mut self, i: I);
     fn get(&self, i: usize) -> T;
 }
 
@@ -42,7 +43,7 @@ impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
         self[i] = v;
     }
 
-    fn fill<I: Iterator<Item=T>>(&mut self, i: I) {
+    fn fill<I: Iterator<Item = T>>(&mut self, i: I) {
         *self = i.collect();
     }
 
@@ -65,7 +66,9 @@ where
     }
 
     pub fn with_capacity(cap: usize) -> Self {
-        VecMap { v: Vec::with_capacity(cap) }
+        VecMap {
+            v: Vec::with_capacity(cap),
+        }
     }
 
     pub fn insert(&mut self, key: K, value: V) {
@@ -85,9 +88,7 @@ where
 
     pub fn get_or_insert(&mut self, key: K, value: V) -> &mut V {
         match self.v.iter().position(|e| e.0 == key) {
-            Some(old) => {
-                &mut self.v[old].1
-            }
+            Some(old) => &mut self.v[old].1,
             None => {
                 self.v.push((key, value));
                 &mut self.v.last_mut().unwrap().1
@@ -97,9 +98,7 @@ where
 
     pub fn get_or_insert_with<F: FnOnce() -> V>(&mut self, key: K, value: F) -> &mut V {
         match self.v.iter().position(|e| e.0 == key) {
-            Some(old) => {
-                &mut self.v[old].1
-            }
+            Some(old) => &mut self.v[old].1,
             None => {
                 self.v.push((key, value()));
                 &mut self.v.last_mut().unwrap().1
@@ -107,11 +106,11 @@ where
         }
     }
 
-    pub fn into_iter(self) -> impl Iterator<Item=(K, V)> {
+    pub fn into_iter(self) -> impl Iterator<Item = (K, V)> {
         self.v.into_iter()
     }
 
-    pub fn values<'a>(&'a self) -> impl Iterator<Item=&'a V> + 'a {
+    pub fn values<'a>(&'a self) -> impl Iterator<Item = &'a V> + 'a {
         self.v.iter().map(|v| &v.1)
     }
 }
@@ -132,7 +131,6 @@ pub enum ParserError {
     #[fail(display = "Expected char {}, got {:?}", _0, _1)]
     Unexpected(String, Option<char>),
 }
-
 
 #[derive(Copy, Clone)]
 pub struct Parser<'a> {
@@ -218,7 +216,7 @@ impl<'a> Parser<'a> {
                     self.idx -= needle.len();
                 }
                 Ok(eq)
-            },
+            }
             Err(e) => Err(e),
         }
     }
@@ -239,7 +237,10 @@ impl<'a> Parser<'a> {
             self.idx += 1;
             Ok(())
         } else {
-            return Err(ParserError::Unexpected(format!("char {}", x as char), next.map(|c| c as char)));
+            return Err(ParserError::Unexpected(
+                format!("char {}", x as char),
+                next.map(|c| c as char),
+            ));
         }
     }
 
@@ -247,7 +248,9 @@ impl<'a> Parser<'a> {
         let sign = if self.cur() == Some(b'-') {
             self.idx += 1;
             -1
-        } else { 1 };
+        } else {
+            1
+        };
         Ok(self.consume_number()? as i64 * sign)
     }
 
@@ -261,7 +264,10 @@ impl<'a> Parser<'a> {
             i += 1;
         }
         if i == 0 {
-            return Err(ParserError::Unexpected(format!("number"), self.cur().map(|c| c as char)));
+            return Err(ParserError::Unexpected(
+                format!("number"),
+                self.cur().map(|c| c as char),
+            ));
         }
         Ok(out)
     }

@@ -1,7 +1,7 @@
-use petgraph::{Undirected, Graph};
+use petgraph::{Graph, Undirected};
 use petgraph::graph::NodeIndex;
 use petgraph::visit::{Dfs, Walker};
-use petgraph::visit::{IntoNodeIdentifiers, IntoNeighbors, NodeIndexable};
+use petgraph::visit::{IntoNeighbors, IntoNodeIdentifiers, NodeIndexable};
 
 use std::cmp::min;
 use std::collections::HashMap;
@@ -13,16 +13,12 @@ fn build_graph(s: &str) -> (Graph<u32, (), Undirected>, HashMap<u32, NodeIndex>)
     let mut id = 0;
     for l in s.trim().lines() {
         let l = &l[l.find("> ").unwrap() + 2..];
-        let cur = *nodes.entry(id).or_insert_with(|| {
-            graph.add_node(id)
-        });
+        let cur = *nodes.entry(id).or_insert_with(|| graph.add_node(id));
         for n in l.split(", ") {
             let n = n.parse::<u32>().unwrap_or_else(|e| {
                 panic!("could not parse {:?} as u32: {:?}", n, e);
             });
-            let node = *nodes.entry(n).or_insert_with(|| {
-                graph.add_node(n)
-            });
+            let node = *nodes.entry(n).or_insert_with(|| graph.add_node(n));
             graph.add_edge(cur, node, ());
         }
         id += 1;
@@ -42,10 +38,10 @@ pub fn part2(s: &str) -> usize {
 
 // Return the quantity of connected groups
 pub fn tarjan_scc<G>(g: G) -> usize
-    where G: IntoNodeIdentifiers + IntoNeighbors + NodeIndexable
+where
+    G: IntoNodeIdentifiers + IntoNeighbors + NodeIndexable,
 {
-    #[derive(Copy, Clone)]
-    #[derive(Debug)]
+    #[derive(Copy, Clone, Debug)]
     struct NodeData {
         index: Option<usize>,
         lowlink: usize,
@@ -54,8 +50,9 @@ pub fn tarjan_scc<G>(g: G) -> usize
 
     #[derive(Debug)]
     struct Data<'a, G>
-        where G: NodeIndexable,
-          G::NodeId: 'a
+    where
+        G: NodeIndexable,
+        G::NodeId: 'a,
     {
         index: usize,
         nodes: Vec<NodeData>,
@@ -64,7 +61,8 @@ pub fn tarjan_scc<G>(g: G) -> usize
     }
 
     fn scc_visit<G>(v: G::NodeId, g: G, data: &mut Data<G>)
-        where G: IntoNeighbors + NodeIndexable
+    where
+        G: IntoNeighbors + NodeIndexable,
     {
         macro_rules! node {
             ($node:expr) => (data.nodes[g.to_index($node)])
@@ -104,7 +102,9 @@ pub fn tarjan_scc<G>(g: G) -> usize
                 loop {
                     let w = data.stack.pop().unwrap();
                     node![w].on_stack = false;
-                    if g.to_index(w) == g.to_index(v) { break; }
+                    if g.to_index(w) == g.to_index(v) {
+                        break;
+                    }
                 }
                 *data.sccs += 1;
             }
@@ -113,7 +113,14 @@ pub fn tarjan_scc<G>(g: G) -> usize
 
     let mut sccs = 0;
     {
-        let map = vec![NodeData { index: None, lowlink: !0, on_stack: false }; g.node_bound()];
+        let map = vec![
+            NodeData {
+                index: None,
+                lowlink: !0,
+                on_stack: false,
+            };
+            g.node_bound()
+        ];
 
         let mut data = Data {
             index: 0,

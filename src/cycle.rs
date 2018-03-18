@@ -1,4 +1,3 @@
-
 #[derive(Debug, Copy, Clone)]
 pub struct Cycle {
     /// Smallest index such that this value will occur infinitely often.
@@ -24,7 +23,8 @@ pub fn length<I: Clone + PartialEq + Eq, F: FnMut(I) -> I>(x0: I, mut f: F) -> u
     let mut tortoise = x0.clone();
     let mut hare = f(x0);
     while tortoise != hare {
-        if power == lam { // time to start new power
+        if power == lam {
+            // time to start new power
             tortoise = hare.clone();
             power *= 2;
             lam = 0;

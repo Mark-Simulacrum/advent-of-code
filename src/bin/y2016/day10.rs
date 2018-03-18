@@ -24,7 +24,10 @@ impl Output {
         } else if let Ok(true) = p.expect(b"output ") {
             Output::Output
         } else {
-            return Err(ParserError::Unexpected(format!("Output"), p.cur().map(|c| c as char)));
+            return Err(ParserError::Unexpected(
+                format!("Output"),
+                p.cur().map(|c| c as char),
+            ));
         };
         Ok(c(p.consume_number()? as u8))
     }
@@ -37,10 +40,10 @@ impl Output {
                 if chips.len() == 2 {
                     return Some(n);
                 }
-            },
+            }
             Output::Output(n) => {
                 outputs[n as usize] = Some(value);
-            },
+            }
         }
         None
     }
@@ -48,9 +51,7 @@ impl Output {
 
 fn parse_input(s: &str) -> Vec<Instruction> {
     s.lines()
-        .filter(|line| {
-            !line.is_empty()
-        })
+        .filter(|line| !line.is_empty())
         .map(|line| {
             let mut p = Parser::new(line.as_bytes());
             if p.expect(b"value ")? {
@@ -68,7 +69,9 @@ fn parse_input(s: &str) -> Vec<Instruction> {
             } else {
                 panic!("unexpected line: {}", line);
             }
-        }).collect::<Result<_, ParserError>>().unwrap()
+        })
+        .collect::<Result<_, ParserError>>()
+        .unwrap()
 }
 
 #[derive(Debug)]
@@ -115,9 +118,9 @@ pub fn part1(s: &str) -> usize {
     let (mut bots, mut outputs) = get_bots(s);
 
     let mut to_check = bots.iter()
-            .filter(|b| b.chips.len() == 2)
-            .map(|b| b.number)
-            .collect::<Vec<_>>();
+        .filter(|b| b.chips.len() == 2)
+        .map(|b| b.number)
+        .collect::<Vec<_>>();
     while let Some(num) = to_check.pop() {
         let num = num as usize;
         let mut chips = mem::replace(&mut bots[num].chips, SmallVec::new());
@@ -139,9 +142,9 @@ pub fn part2(s: &str) -> usize {
     let (mut bots, mut outputs) = get_bots(s);
 
     let mut to_check = bots.iter()
-            .filter(|b| b.chips.len() == 2)
-            .map(|b| b.number)
-            .collect::<Vec<_>>();
+        .filter(|b| b.chips.len() == 2)
+        .map(|b| b.number)
+        .collect::<Vec<_>>();
     while let Some(num) = to_check.pop() {
         let mut chips = mem::replace(&mut bots[num as usize].chips, SmallVec::new());
         let (low, high) = {
@@ -153,9 +156,7 @@ pub fn part2(s: &str) -> usize {
         to_check.extend(high.put(chips[1], &mut bots, &mut outputs));
     }
 
-    (outputs[0].unwrap() as usize) *
-    (outputs[1].unwrap() as usize) *
-    (outputs[2].unwrap() as usize)
+    (outputs[0].unwrap() as usize) * (outputs[1].unwrap() as usize) * (outputs[2].unwrap() as usize)
 }
 
 #[test]

@@ -2,7 +2,7 @@ use std::fmt;
 use fnv::FnvHashMap as HashMap;
 use std::rc::Rc;
 
-use advent_of_code::{Matrix, BitVec};
+use advent_of_code::{BitVec, Matrix};
 
 #[derive(Hash, Clone, PartialEq, Eq)]
 struct Grid {
@@ -90,7 +90,11 @@ fn eval(s: &str, iterations: usize) -> u32 {
         pattern.matrix.rotate_90(); // 270
         patterns.push(pattern.clone());
         patterns.push(pattern.reversed_rows());
-        let mut map = if patterns[0].size == 2 { &mut rules_2 } else { &mut rules_3 };
+        let mut map = if patterns[0].size == 2 {
+            &mut rules_2
+        } else {
+            &mut rules_3
+        };
         for pattern in patterns {
             map.insert(pattern, output.clone());
         }

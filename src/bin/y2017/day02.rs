@@ -4,7 +4,8 @@ use std::usize;
 use smallvec::SmallVec;
 
 pub fn part1(s: &str) -> usize {
-    s.lines().filter(|l| !l.is_empty())
+    s.lines()
+        .filter(|l| !l.is_empty())
         .map(|l| l.split(' '))
         .map(|l| l.map(|x| x.parse::<usize>().unwrap()))
         .map(|l| {
@@ -20,7 +21,8 @@ pub fn part1(s: &str) -> usize {
 }
 
 pub fn part2(s: &str) -> usize {
-    s.lines().filter(|l| !l.is_empty())
+    s.lines()
+        .filter(|l| !l.is_empty())
         .map(|l| l.split(' '))
         .map(|l| l.map(|x| x.parse::<usize>().unwrap()))
         .map(|l| {
@@ -39,10 +41,15 @@ pub fn part2(s: &str) -> usize {
 
 #[test]
 fn part1_1() {
-    assert_eq!(part1("
+    assert_eq!(
+        part1(
+            "
 5 1 9 5
 7 5 3
-2 4 6 8"), 18);
+2 4 6 8"
+        ),
+        18
+    );
 }
 
 #[test]
@@ -52,10 +59,15 @@ fn part1_actual() {
 
 #[test]
 fn part2_1() {
-    assert_eq!(part2("
+    assert_eq!(
+        part2(
+            "
 5 9 2 8
 9 4 7 3
-3 8 6 5"), 9);
+3 8 6 5"
+        ),
+        9
+    );
 }
 
 #[test]

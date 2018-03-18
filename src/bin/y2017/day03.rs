@@ -22,19 +22,23 @@ fn spiral(n: usize) -> usize {
 }
 
 pub fn part1(n: usize) -> usize {
-    if n == 1 { return 0; }
+    if n == 1 {
+        return 0;
+    }
     let spiral = spiral(n);
-    let top_right = 4*spiral.pow(2) - 2 * spiral + 1;
-    let bot_left  = 4*spiral.pow(2) + 2 * spiral + 1;
-    let top_left  = 4*spiral.pow(2) + 1;
+    let top_right = 4 * spiral.pow(2) - 2 * spiral + 1;
+    let bot_left = 4 * spiral.pow(2) + 2 * spiral + 1;
+    let top_left = 4 * spiral.pow(2) + 1;
     let mid = spiral;
     let center_left = top_left + mid;
     let center_top = top_left - mid;
     let center_right = top_right - mid;
     let center_bot = bot_left + mid;
-    let distance_to_center = [center_left, center_top, center_right, center_bot].iter()
-        .map(|x| n.checked_sub(*x).unwrap_or_else(|| x -n ))
-        .min().unwrap();
+    let distance_to_center = [center_left, center_top, center_right, center_bot]
+        .iter()
+        .map(|x| n.checked_sub(*x).unwrap_or_else(|| x - n))
+        .min()
+        .unwrap();
     spiral + distance_to_center
 }
 

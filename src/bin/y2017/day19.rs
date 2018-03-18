@@ -4,16 +4,25 @@ fn with_direction(v: usize, dir: isize) -> usize {
 }
 
 #[derive(Copy, Clone, Debug)]
-struct Direction { x: isize, y: isize }
+struct Direction {
+    x: isize,
+    y: isize,
+}
 
 impl Direction {
     fn reverse(self) -> Direction {
-        Direction { x: -self.x, y: -self.y }
+        Direction {
+            x: -self.x,
+            y: -self.y,
+        }
     }
 }
 
 fn eval(s: &str) -> (String, usize) {
-    let mut grid = s.trim_matches('\n').lines().map(|l| l.as_bytes().to_vec()).collect::<Vec<_>>();
+    let mut grid = s.trim_matches('\n')
+        .lines()
+        .map(|l| l.as_bytes().to_vec())
+        .collect::<Vec<_>>();
     for row in &mut grid {
         row.insert(0, b' ');
         row.push(b' ');
@@ -34,23 +43,25 @@ fn eval(s: &str) -> (String, usize) {
                 x = with_direction(x, dir.x);
             }
             b'+' => {
-                let last_val = grid
-                    [with_direction(y, dir.reverse().y)]
-                    [with_direction(x, dir.reverse().x)];
+                let last_val =
+                    grid[with_direction(y, dir.reverse().y)][with_direction(x, dir.reverse().x)];
                 let check = if dir.x != 0 {
                     [
                         (with_direction(y, 1), x, Direction { x: 0, y: 1 }),
-                        (with_direction(y, -1), x, Direction { x: 0, y: -1 })
+                        (with_direction(y, -1), x, Direction { x: 0, y: -1 }),
                     ]
                 } else {
                     [
                         (y, with_direction(x, 1), Direction { x: 1, y: 0 }),
-                        (y, with_direction(x, -1), Direction { x: -1 , y: 0 })
+                        (y, with_direction(x, -1), Direction { x: -1, y: 0 }),
                     ]
                 };
-                let next = check.iter()
+                let next = check
+                    .iter()
                     .find(|p| {
-                        let v = grid.get(p.0).and_then(|r| r.get(p.1).cloned()).unwrap_or(b' ');
+                        let v = grid.get(p.0)
+                            .and_then(|r| r.get(p.1).cloned())
+                            .unwrap_or(b' ');
                         v != b' ' && v != last_val
                     })
                     .unwrap();

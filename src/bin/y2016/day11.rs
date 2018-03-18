@@ -3,10 +3,10 @@
 // Stops on each floor; must have both generator and microchip on floor.
 // Goal: Bring all RTGs and microchips to 4th floor.
 
-use std::cmp::{self, PartialOrd, Ord, Ordering};
+use std::cmp::{self, Ord, Ordering, PartialOrd};
 use std::usize;
 use std::u16;
-use std::collections::{HashSet, BinaryHeap};
+use std::collections::{BinaryHeap, HashSet};
 
 use itertools::Itertools;
 
@@ -14,7 +14,10 @@ fn exec(floors: Floors) -> usize {
     let mut min_steps = usize::MAX;
     let mut visited = HashSet::new();
     let mut potential_states = BinaryHeap::new();
-    potential_states.push(State { steps: 0, floors: floors });
+    potential_states.push(State {
+        steps: 0,
+        floors: floors,
+    });
     while let Some(state) = potential_states.pop() {
         if state.is_done() {
             min_steps = cmp::min(min_steps, state.steps);
@@ -24,7 +27,12 @@ fn exec(floors: Floors) -> usize {
             visited.reserve(potential_states.len());
             continue;
         }
-        let i = state.floors.0.iter().position(|f| f.has_elevator()).unwrap();
+        let i = state
+            .floors
+            .0
+            .iter()
+            .position(|f| f.has_elevator())
+            .unwrap();
         let elevator_floor = state.floors.0[i].0;
 
         let mut move_two = false;
@@ -43,7 +51,12 @@ fn exec(floors: Floors) -> usize {
 
             if !move_two {
                 if state.floors.can_move_up(i, a, None) {
-                    potential_states.push(state.with_floors(state.floors.moving(i, i + 1, a, None)));
+                    potential_states.push(state.with_floors(state.floors.moving(
+                        i,
+                        i + 1,
+                        a,
+                        None,
+                    )));
                 }
             }
         }
@@ -51,7 +64,12 @@ fn exec(floors: Floors) -> usize {
         if !move_one_down {
             for (a, b) in elevator_floor.iter().tuple_combinations() {
                 if state.floors.can_move_down(i, a, Some(b)) {
-                    potential_states.push(state.with_floors(state.floors.moving(i, i - 1, a, Some(b))));
+                    potential_states.push(state.with_floors(state.floors.moving(
+                        i,
+                        i - 1,
+                        a,
+                        Some(b),
+                    )));
                 }
             }
         }
@@ -98,7 +116,9 @@ impl State {
     }
 
     fn is_done(&self) -> bool {
-        self.floors.0[0..self.floors.0.len() - 1].iter().all(|f| f.0.is_empty())
+        self.floors.0[0..self.floors.0.len() - 1]
+            .iter()
+            .all(|f| f.0.is_empty())
     }
 }
 
@@ -173,29 +193,27 @@ struct Floors([Floor; 4]);
 
 impl Floors {
     fn to_bits(self) -> u64 {
-        (self.0[0].to_bits() as u64) << (16*0) |
-        (self.0[1].to_bits() as u64) << (16*1) |
-        (self.0[2].to_bits() as u64) << (16*2) |
-        (self.0[3].to_bits() as u64) << (16*3)
+        (self.0[0].to_bits() as u64) << (16 * 0) | (self.0[1].to_bits() as u64) << (16 * 1)
+            | (self.0[2].to_bits() as u64) << (16 * 2)
+            | (self.0[3].to_bits() as u64) << (16 * 3)
     }
 
     fn new(s: &[Item]) -> Floors {
         assert_eq!(s.len(), 4);
-        Floors([
-            Floor(s[0]),
-            Floor(s[1]),
-            Floor(s[2]),
-            Floor(s[3]),
-        ])
+        Floors([Floor(s[0]), Floor(s[1]), Floor(s[2]), Floor(s[3])])
     }
 
     fn can_move_down(self, from: usize, a: Item, b: Option<Item>) -> bool {
-        if from == 0 { return false; }
+        if from == 0 {
+            return false;
+        }
         !self.0[from - 1].0.is_empty() && self.0[from - 1].is_valid_with(a, b)
     }
 
     fn can_move_up(self, from: usize, a: Item, b: Option<Item>) -> bool {
-        if from + 1 >= self.0.len() { return false; }
+        if from + 1 >= self.0.len() {
+            return false;
+        }
         self.0[from + 1].is_valid_with(a, b)
     }
 
@@ -275,26 +293,15 @@ impl Item {
 // The fourth floor contains nothing relevant.
 pub static INPUT: &[Item] = &[
     Item {
-        bits:
-        Item::ELEVATOR.bits |
-        Item::THULIUM_GENERATOR.bits |
-        Item::THULIUM_MICROCHIP.bits |
-        Item::PLUTONIUM_GENERATOR.bits |
-        Item::STRONTIUM_GENERATOR.bits
+        bits: Item::ELEVATOR.bits | Item::THULIUM_GENERATOR.bits | Item::THULIUM_MICROCHIP.bits
+            | Item::PLUTONIUM_GENERATOR.bits | Item::STRONTIUM_GENERATOR.bits,
     },
     Item {
-        bits:
-        Item::PLUTONIUM_MICROCHIP.bits |
-        Item::STRONTIUM_MICROCHIP.bits
+        bits: Item::PLUTONIUM_MICROCHIP.bits | Item::STRONTIUM_MICROCHIP.bits,
     },
     Item {
-        bits:
-        Item::PROMETHIUM_GENERATOR.bits |
-        Item::PROMETHIUM_MICROCHIP.bits |
-        Item::RUTHENIUM_GENERATOR.bits |
-        Item::RUTHENIUM_MICROCHIP.bits
+        bits: Item::PROMETHIUM_GENERATOR.bits | Item::PROMETHIUM_MICROCHIP.bits
+            | Item::RUTHENIUM_GENERATOR.bits | Item::RUTHENIUM_MICROCHIP.bits,
     },
-    Item {
-        bits: 0
-    },
+    Item { bits: 0 },
 ];

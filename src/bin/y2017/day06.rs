@@ -10,7 +10,9 @@ fn max(list: &[u32]) -> (usize, u32) {
             max_idx = idx;
             max = i;
         }
-        if idx == 0 { break; }
+        if idx == 0 {
+            break;
+        }
         idx -= 1;
     }
     (max_idx, max)
@@ -61,6 +63,5 @@ fn part2_1() {
 fn part2_actual() {
     assert_eq!(part2(INPUT), 2392);
 }
-
 
 pub static INPUT: &[u32] = &[4, 1, 15, 12, 0, 9, 9, 5, 5, 8, 7, 3, 14, 5, 12, 3];

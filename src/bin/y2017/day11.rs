@@ -48,7 +48,7 @@ impl Position {
     // The axial system is based off of x + y + z = 0, so it is simple to convert to cube
     // coordinates.
     fn distance(&self) -> i32 {
-        let to_cube = |p: Position| { (p.x, p.y, -p.x-p.y) };
+        let to_cube = |p: Position| (p.x, p.y, -p.x - p.y);
         let c = to_cube(*self);
         (c.0.abs() + c.1.abs() + c.2.abs()) / 2
     }

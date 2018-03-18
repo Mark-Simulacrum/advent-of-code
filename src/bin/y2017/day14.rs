@@ -11,8 +11,12 @@ pub fn part2(s: &str) -> u32 {
 }
 
 fn get(rows: &[u128], pos: (usize, u8)) -> bool {
-    if pos.0 == rows.len() { return false; }
-    if pos.1 > 127 { return false; }
+    if pos.0 == rows.len() {
+        return false;
+    }
+    if pos.1 > 127 {
+        return false;
+    }
     rows[pos.0] & (1u128 << pos.1) != 0
 }
 
@@ -21,9 +25,15 @@ fn remove_groups(rows: &mut [u128]) -> u32 {
     let mut queue = Vec::new();
     for row in 0..rows.len() {
         for col in 0..128 {
-            if row == rows.len() { continue; }
-            if col > 127 { continue; }
-            if !get(&rows, (row, col)) { continue; }
+            if row == rows.len() {
+                continue;
+            }
+            if col > 127 {
+                continue;
+            }
+            if !get(&rows, (row, col)) {
+                continue;
+            }
             queue.push((row, col));
             while let Some((row, col)) = queue.pop() {
                 let mut w = (row, col);
@@ -62,31 +72,33 @@ fn remove_groups(rows: &mut [u128]) -> u32 {
 
 #[test]
 fn remove_groups_1() {
-    assert_eq!(remove_groups(&mut vec![
-        0b01010,
-        0b01010,
-        0b01110,
-    ]), 1);
+    assert_eq!(remove_groups(&mut vec![0b01010, 0b01010, 0b01110]), 1);
 }
 
 #[test]
 fn remove_groups_2() {
-    assert_eq!(remove_groups(&mut vec![
-        0b01001111001110111,
-        0b01011001001010101,
-        0b01110001001010101,
-        0b00000111111011101
-    ]), 1);
+    assert_eq!(
+        remove_groups(&mut vec![
+            0b01001111001110111,
+            0b01011001001010101,
+            0b01110001001010101,
+            0b00000111111011101,
+        ]),
+        1
+    );
 }
 
 #[test]
 fn remove_groups_3() {
-    assert_eq!(remove_groups(&mut vec![
-        0b10100000000000000,
-        0b01100000000000000,
-        0b00000000000000000,
-        0b00000000000000000
-    ]), 2);
+    assert_eq!(
+        remove_groups(&mut vec![
+            0b10100000000000000,
+            0b01100000000000000,
+            0b00000000000000000,
+            0b00000000000000000,
+        ]),
+        2
+    );
 }
 
 fn parse_rows(s: &str) -> [u128; 128] {

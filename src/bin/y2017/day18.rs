@@ -49,7 +49,7 @@ impl Instruction {
     fn exec(self, registers: &mut [i64; 26]) -> Out {
         match self {
             Instruction::Snd(val) => return Out::Send(val.resolve(registers)),
-            Instruction::Set(reg, val) => registers[reg] =  val.resolve(registers),
+            Instruction::Set(reg, val) => registers[reg] = val.resolve(registers),
             Instruction::Add(reg, val) => registers[reg] += val.resolve(registers),
             Instruction::Mul(reg, val) => registers[reg] *= val.resolve(registers),
             Instruction::Mod(reg, val) => registers[reg] %= val.resolve(registers),
@@ -69,24 +69,27 @@ impl Instruction {
 }
 
 fn parse(s: &str) -> Vec<Instruction> {
-    s.trim().lines().map(|line| {
-        let arg1 = Value::parse(&line[4..5]);
-        match &line[0..3] {
-            "snd" => Instruction::Snd(arg1),
-            "rcv" => Instruction::Rcv(arg1),
-            "jgz" => Instruction::Jmp(arg1, Value::parse(&line[6..])),
-            val => {
-                let arg1 = to_register(line.as_bytes()[4] as char);
-                match val {
-                    "set" => Instruction::Set(arg1, Value::parse(&line[6..])),
-                    "add" => Instruction::Add(arg1, Value::parse(&line[6..])),
-                    "mul" => Instruction::Mul(arg1, Value::parse(&line[6..])),
-                    "mod" => Instruction::Mod(arg1, Value::parse(&line[6..])),
-                    _ => unreachable!("unexpected instruction: {}", line),
+    s.trim()
+        .lines()
+        .map(|line| {
+            let arg1 = Value::parse(&line[4..5]);
+            match &line[0..3] {
+                "snd" => Instruction::Snd(arg1),
+                "rcv" => Instruction::Rcv(arg1),
+                "jgz" => Instruction::Jmp(arg1, Value::parse(&line[6..])),
+                val => {
+                    let arg1 = to_register(line.as_bytes()[4] as char);
+                    match val {
+                        "set" => Instruction::Set(arg1, Value::parse(&line[6..])),
+                        "add" => Instruction::Add(arg1, Value::parse(&line[6..])),
+                        "mul" => Instruction::Mul(arg1, Value::parse(&line[6..])),
+                        "mod" => Instruction::Mod(arg1, Value::parse(&line[6..])),
+                        _ => unreachable!("unexpected instruction: {}", line),
+                    }
                 }
             }
-        }
-    }).collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn part1(s: &str) -> i64 {
@@ -98,7 +101,7 @@ pub fn part1(s: &str) -> i64 {
         let instr = instructions[pos];
         pos += 1;
         match instr.exec(&mut registers) {
-            Out::None => {},
+            Out::None => {}
             Out::Receive => return last_sound.unwrap(),
             Out::Send(x) => last_sound = Some(x),
             Out::Jump(off) => pos = ((pos as isize) + off - 1) as usize,
@@ -140,8 +143,8 @@ impl<'a> Program<'a> {
                 Instruction::Snd(val) => {
                     self.queue.push_back(val.resolve(&self.registers));
                     self.sent += 1;
-                    break
-                },
+                    break;
+                }
                 Instruction::Rcv(Value::Register(reg)) => {
                     if let Some(input) = input.pop_front() {
                         self.registers[reg] = input;
@@ -151,8 +154,8 @@ impl<'a> Program<'a> {
                     }
                     break;
                 }
-                Instruction::Rcv(Value::Value(_)) => {},
-                Instruction::Set(reg, val) => self.registers[reg] =  val.resolve(&self.registers),
+                Instruction::Rcv(Value::Value(_)) => {}
+                Instruction::Set(reg, val) => self.registers[reg] = val.resolve(&self.registers),
                 Instruction::Add(reg, val) => self.registers[reg] += val.resolve(&self.registers),
                 Instruction::Mul(reg, val) => self.registers[reg] *= val.resolve(&self.registers),
                 Instruction::Mod(reg, val) => self.registers[reg] %= val.resolve(&self.registers),
@@ -176,8 +179,12 @@ pub fn part2(s: &str) -> usize {
     let mut progress = true;
     while progress {
         progress = false;
-        while a.execute(&mut b.queue) { progress = true; }
-        while b.execute(&mut a.queue) { progress = true; }
+        while a.execute(&mut b.queue) {
+            progress = true;
+        }
+        while b.execute(&mut a.queue) {
+            progress = true;
+        }
     }
     b.sent
 }
@@ -196,7 +203,6 @@ fn part1_actual() {
 fn part2_1() {
     assert_eq!(part2(EXAMPLE_2), 3);
 }
-
 
 #[cfg(test)]
 static EXAMPLE_1: &str = "

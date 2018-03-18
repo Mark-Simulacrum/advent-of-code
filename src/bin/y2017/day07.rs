@@ -40,24 +40,25 @@ fn build_graph(input: &str) -> Graph<Node, ()> {
     let lines = input.trim().lines().count();
     let mut graph = Graph::<Node, ()>::with_capacity(lines, lines / 2);
     let mut nodes = HashMap::<&str, NodeIndex>::with_capacity(lines);
-	for line in input.trim().lines() {
-	    let (head, weight, tails) = parse_line(line);
-	    let head_idx = match nodes.entry(head) {
-	        Entry::Occupied(occ) => {
-	            let x = *occ.get();
-	            graph[x].weight = Some(weight);
+    for line in input.trim().lines() {
+        let (head, weight, tails) = parse_line(line);
+        let head_idx = match nodes.entry(head) {
+            Entry::Occupied(occ) => {
+                let x = *occ.get();
+                graph[x].weight = Some(weight);
                 x
             }
-            Entry::Vacant(vac) => {
-                *vac.insert(graph.add_node(Node {
-                    name: head,
-                    weight: Some(weight),
-                }))
-            }
+            Entry::Vacant(vac) => *vac.insert(graph.add_node(Node {
+                name: head,
+                weight: Some(weight),
+            })),
         };
-	    for tail in tails {
+        for tail in tails {
             let tail_idx = *nodes.entry(tail).or_insert_with(|| {
-                graph.add_node(Node { name: tail, weight: None })
+                graph.add_node(Node {
+                    name: tail,
+                    weight: None,
+                })
             });
             graph.add_edge(head_idx, tail_idx, ());
         }
@@ -65,7 +66,7 @@ fn build_graph(input: &str) -> Graph<Node, ()> {
     graph
 }
 
-fn parse_line<'a>(line: &'a str) -> (&'a str, usize, impl Iterator<Item=&'a str>) {
+fn parse_line<'a>(line: &'a str) -> (&'a str, usize, impl Iterator<Item = &'a str>) {
     let (a, b) = match line.find(" -> ") {
         Some(arrow_idx) => (&line[0..arrow_idx], &line[arrow_idx + " -> ".len()..]),
         None => (line, ""),
@@ -116,13 +117,18 @@ fn parse_b(b: &mut ::test::Bencher) {
 #[test]
 fn part1_1() {
     // c -> e -> a
-    assert_eq!(part1("
+    assert_eq!(
+        part1(
+            "
 b (00)
 foo (00)
 e (00) -> foo
 c (00) -> a
 a (00) -> b, e
-    "), "c");
+    "
+        ),
+        "c"
+    );
 }
 
 #[test]
@@ -132,7 +138,9 @@ fn part1_actual() {
 
 #[test]
 fn part2_1() {
-    assert_eq!(part2("
+    assert_eq!(
+        part2(
+            "
 pbga (66)
 xhth (57)
 ebii (61)
@@ -145,7 +153,10 @@ tknk (41) -> ugml, padx, fwft
 jptl (61)
 ugml (68) -> gyxo, ebii, jptl
 gyxo (61)
-cntj (57)"), 60);
+cntj (57)"
+        ),
+        60
+    );
 }
 
 #[test]

@@ -3,15 +3,17 @@ use std::collections::{BTreeMap, HashSet};
 
 pub fn part1(s: &str) -> usize {
     // Find the particle with the lowest acceleration, velocity, and position.
-    parse(s).enumerate().min_by(|&(_, a), &(_, b)| {
-        a.a.mag_sq().cmp(&b.a.mag_sq())
-        .then_with(|| {
-            a.v.mag_sq().cmp(&b.v.mag_sq())
+    parse(s)
+        .enumerate()
+        .min_by(|&(_, a), &(_, b)| {
+            a.a
+                .mag_sq()
+                .cmp(&b.a.mag_sq())
+                .then_with(|| a.v.mag_sq().cmp(&b.v.mag_sq()))
+                .then_with(|| a.pos.mag_sq().cmp(&b.pos.mag_sq()))
         })
-        .then_with(|| {
-            a.pos.mag_sq().cmp(&b.pos.mag_sq())
-        })
-    }).unwrap().0
+        .unwrap()
+        .0
 }
 
 trait ToInt {
@@ -42,17 +44,19 @@ fn solve_quadratic(a: i32, b: i32, c: i32) -> (Solution, Solution) {
             // bt = -c
             // t = -c/b
             if c % b == 0 {
-                (Solution::Exact(-c/b), Solution::Exact(-c/b))
+                (Solution::Exact(-c / b), Solution::Exact(-c / b))
             } else {
                 (Solution::None, Solution::None)
             }
         }
     } else {
-        let discr = b.pow(2) - 4*a*c;
+        let discr = b.pow(2) - 4 * a * c;
         if discr >= 0 {
             if let Some(discr) = (discr as f64).sqrt().to_i32() {
-                (Solution::Exact((-b - discr) / (2*a)),
-                Solution::Exact((-b + discr) / (2*a)))
+                (
+                    Solution::Exact((-b - discr) / (2 * a)),
+                    Solution::Exact((-b + discr) / (2 * a)),
+                )
             } else {
                 (Solution::None, Solution::None)
             }
@@ -92,7 +96,11 @@ impl Solution {
             (Solution::Any, Solution::Exact(a)) => Solution::Exact(a),
 
             (Solution::Exact(a), Solution::Exact(b)) => {
-                if a == b { Solution::Exact(a) } else { Solution::None }
+                if a == b {
+                    Solution::Exact(a)
+                } else {
+                    Solution::None
+                }
             }
 
             (Solution::None, _) => Solution::None,
@@ -101,7 +109,7 @@ impl Solution {
     }
 }
 
-fn parse<'a>(s: &'a str) -> impl Iterator<Item=Particle> + 'a {
+fn parse<'a>(s: &'a str) -> impl Iterator<Item = Particle> + 'a {
     s.trim().lines().map(|x| Particle::parse(x))
 }
 
@@ -110,7 +118,9 @@ pub fn part2(s: &str) -> usize {
     let mut collisions = BTreeMap::new();
     for (i1, p1) in particles.iter().enumerate() {
         for (i2, p2) in particles.iter().enumerate() {
-            if i1 == i2 { continue; }
+            if i1 == i2 {
+                continue;
+            }
             let (x1, x2) = detect_collision!(p1, p2, x);
             let (y1, y2) = detect_collision!(p1, p2, y);
             let (z1, z2) = detect_collision!(p1, p2, z);
@@ -126,7 +136,10 @@ pub fn part2(s: &str) -> usize {
             ];
             for &sol in &sols {
                 if let Solution::Exact(time) = sol {
-                    collisions.entry(time).or_insert_with(Vec::new).push((i1, i2));
+                    collisions
+                        .entry(time)
+                        .or_insert_with(Vec::new)
+                        .push((i1, i2));
                 }
             }
         }
@@ -145,7 +158,11 @@ pub fn part2(s: &str) -> usize {
 }
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
-struct Vector { x: i32, y: i32, z: i32 }
+struct Vector {
+    x: i32,
+    y: i32,
+    z: i32,
+}
 
 impl fmt::Debug for Vector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -155,20 +172,20 @@ impl fmt::Debug for Vector {
 
 impl Vector {
     fn parse(s: &str) -> Self {
-        let mut n = s.split(',').map(|x| x.trim().parse::<i32>().unwrap_or_else(|e| {
-            panic!("failed to parse {:?} (part of {:?}) as i32: {:?}", x, s, e);
-        }));
+        let mut n = s.split(',').map(|x| {
+            x.trim().parse::<i32>().unwrap_or_else(|e| {
+                panic!("failed to parse {:?} (part of {:?}) as i32: {:?}", x, s, e);
+            })
+        });
         Vector {
             x: n.next().unwrap(),
             y: n.next().unwrap(),
-            z: n.next().unwrap()
+            z: n.next().unwrap(),
         }
     }
 
     fn mag_sq(self) -> u64 {
-        (self.x.abs() as u64).pow(2) +
-        (self.y.abs() as u64).pow(2) +
-        (self.z.abs() as u64).pow(2)
+        (self.x.abs() as u64).pow(2) + (self.y.abs() as u64).pow(2) + (self.z.abs() as u64).pow(2)
     }
 }
 

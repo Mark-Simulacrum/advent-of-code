@@ -3,7 +3,10 @@ use quickcheck::TestResult;
 use advent_of_code::swap;
 
 pub fn part1(input: &str) -> usize {
-    let input = input.split(',').map(|x| x.parse::<usize>().unwrap()).collect::<Vec<_>>();
+    let input = input
+        .split(',')
+        .map(|x| x.parse::<usize>().unwrap())
+        .collect::<Vec<_>>();
     let mut list = (0..256).into_iter().collect::<Vec<usize>>();
     let mut cur = 0;
     let mut skip = 0;
@@ -16,7 +19,11 @@ pub fn part2(input: &str) -> String {
 }
 
 pub fn knot_hash(input: &str) -> u128 {
-    let mut input = input.as_bytes().iter().map(|x| *x as usize).collect::<Vec<usize>>();
+    let mut input = input
+        .as_bytes()
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
     input.extend_from_slice(&[17, 31, 73, 47, 23]);
     let mut list = (0..256).into_iter().collect::<Vec<usize>>();
     let mut cur = 0;
@@ -48,7 +55,9 @@ fn reverse_after<T>(slice: &mut [T], a: usize, length: usize) {
         let mut from = a;
         let mut to = a + length - slice.len() - 1;
         while idx < (length / 2) {
-            unsafe { swap(slice, from, to); }
+            unsafe {
+                swap(slice, from, to);
+            }
             from += 1;
             if from == slice.len() {
                 from = 0;

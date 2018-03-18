@@ -1,4 +1,4 @@
-use day18::{Value, to_register};
+use day18::{to_register, Value};
 
 #[derive(Copy, Clone, Debug)]
 enum Instruction {
@@ -34,21 +34,24 @@ impl Instruction {
 }
 
 fn parse(s: &str) -> Vec<Instruction> {
-    s.trim().lines().map(|line| {
-        let arg1 = Value::parse(&line[4..5]);;
-        match &line[0..3] {
-            "jnz" => Instruction::Jmp(arg1, Value::parse(&line[6..])),
-            val => {
-                let arg1 = to_register(line.as_bytes()[4] as char);
-                match val {
-                    "set" => Instruction::Set(arg1, Value::parse(&line[6..])),
-                    "sub" => Instruction::Sub(arg1, Value::parse(&line[6..])),
-                    "mul" => Instruction::Mul(arg1, Value::parse(&line[6..])),
-                    _ => unreachable!("unexpected instruction: {}", line),
+    s.trim()
+        .lines()
+        .map(|line| {
+            let arg1 = Value::parse(&line[4..5]);
+            match &line[0..3] {
+                "jnz" => Instruction::Jmp(arg1, Value::parse(&line[6..])),
+                val => {
+                    let arg1 = to_register(line.as_bytes()[4] as char);
+                    match val {
+                        "set" => Instruction::Set(arg1, Value::parse(&line[6..])),
+                        "sub" => Instruction::Sub(arg1, Value::parse(&line[6..])),
+                        "mul" => Instruction::Mul(arg1, Value::parse(&line[6..])),
+                        _ => unreachable!("unexpected instruction: {}", line),
+                    }
                 }
             }
-        }
-    }).collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn part1(s: &str) -> usize {
@@ -60,7 +63,7 @@ pub fn part1(s: &str) -> usize {
         let instr = instructions[pos];
         pos += 1;
         match instr.exec(&mut registers) {
-            Out::None => {},
+            Out::None => {}
             Out::Mul => times += 1,
             Out::Jmp(off) => pos = ((pos as isize) + off - 1) as usize,
         }

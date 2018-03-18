@@ -1,5 +1,5 @@
 use std::fmt;
-use advent_of_code::{Grid, BitVec};
+use advent_of_code::{BitVec, Grid};
 
 pub fn part1(s: &str) -> u32 {
     let (iterations, states) = parse(s);
@@ -53,8 +53,16 @@ impl State {
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "{{")?;
-        writeln!(f, "0: write {}, go {}, next {}", self.zero.0 as u8, self.zero.1, self.zero.2)?;
-        writeln!(f, "1: write {}, go {}, next {}", self.one.0 as u8, self.one.1, self.one.2)?;
+        writeln!(
+            f,
+            "0: write {}, go {}, next {}",
+            self.zero.0 as u8, self.zero.1, self.zero.2
+        )?;
+        writeln!(
+            f,
+            "1: write {}, go {}, next {}",
+            self.one.0 as u8, self.one.1, self.one.2
+        )?;
         write!(f, "}}")
     }
 }
@@ -63,7 +71,9 @@ fn parse(s: &str) -> (usize, Vec<State>) {
     let lines = s.trim().lines().collect::<Vec<_>>();
     assert_eq!(lines[0], "Begin in state A.");
     let start = lines[1].find("after").unwrap() + "after ".len();
-    let till = lines[1][start..lines[1].find(" steps").unwrap()].parse::<usize>().unwrap();
+    let till = lines[1][start..lines[1].find(" steps").unwrap()]
+        .parse::<usize>()
+        .unwrap();
 
     let mut states = Vec::new();
     let mut state = State::invalid();
@@ -82,12 +92,20 @@ fn parse(s: &str) -> (usize, Vec<State>) {
             is_zero = false;
             continue;
         }
-        let to = if is_zero { &mut state.zero } else { &mut state.one };
+        let to = if is_zero {
+            &mut state.zero
+        } else {
+            &mut state.one
+        };
         if line.contains("Write the value") {
             to.0 = line.as_bytes()[22] == b'1';
         }
         if line.contains("Move one slot") {
-            if line.contains("right") { to.1 = 1; } else { to.1 = -1; }
+            if line.contains("right") {
+                to.1 = 1;
+            } else {
+                to.1 = -1;
+            }
         }
         if line.contains("Continue with state") {
             to.2 = (line.as_bytes()[26] - b'A') as usize;

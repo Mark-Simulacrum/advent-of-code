@@ -4,12 +4,18 @@ use advent_of_code::swap;
 fn eval(dancers: &mut [u8], instructions: &[Instruction]) {
     for &instr in instructions {
         match instr {
-            Instruction::Rotate(k) => dancers.rotate(k),
+            Instruction::Rotate(k) => dancers.rotate_left(k),
             Instruction::SwapPositions(a, b) => unsafe { swap(dancers, a, b) },
             Instruction::SwapDancers(a, b) => {
                 let pos0 = dancers.iter().position(|&v| v == a || v == b).unwrap();
-                let pos1 = pos0 + 1 + dancers[pos0 + 1..].iter().position(|&v| v == a || v == b).unwrap();
-                unsafe { swap(dancers, pos0, pos1); }
+                let pos1 = pos0 + 1
+                    + dancers[pos0 + 1..]
+                        .iter()
+                        .position(|&v| v == a || v == b)
+                        .unwrap();
+                unsafe {
+                    swap(dancers, pos0, pos1);
+                }
             }
         }
     }
@@ -24,30 +30,35 @@ enum Instruction {
 
 fn parse(dancers: usize, instructions: &str) -> Vec<Instruction> {
     let mut rotated_by = 0;
-    let mut instrs = instructions.split(',').filter_map(|instr| {
-        let byte = instr.as_bytes()[0];
-        match byte {
-            b's' => {
-                let num = instr[1..].parse::<usize>().unwrap();
-                let k = dancers - num;
-                rotated_by = (rotated_by + k) % dancers;
-                None
+    let mut instrs = instructions
+        .split(',')
+        .filter_map(|instr| {
+            let byte = instr.as_bytes()[0];
+            match byte {
+                b's' => {
+                    let num = instr[1..].parse::<usize>().unwrap();
+                    let k = dancers - num;
+                    rotated_by = (rotated_by + k) % dancers;
+                    None
+                }
+                b'x' => {
+                    let mut nums = instr[1..].split('/').map(|n| n.parse::<usize>().unwrap());
+                    let mut a = (nums.next().unwrap() + rotated_by) % dancers;
+                    let mut b = (nums.next().unwrap() + rotated_by) % dancers;
+                    if a > b {
+                        mem::swap(&mut a, &mut b);
+                    }
+                    Some(Instruction::SwapPositions(a, b))
+                }
+                b'p' => {
+                    let mut a = instr.as_bytes()[1];
+                    let mut b = instr.as_bytes()[3];
+                    Some(Instruction::SwapDancers(a, b))
+                }
+                _ => unreachable!(),
             }
-            b'x' => {
-                let mut nums = instr[1..].split('/').map(|n| n.parse::<usize>().unwrap());
-                let mut a = (nums.next().unwrap() + rotated_by) % dancers;
-                let mut b = (nums.next().unwrap() + rotated_by) % dancers;
-                if a > b { mem::swap(&mut a, &mut b); }
-                Some(Instruction::SwapPositions(a, b))
-            }
-            b'p' => {
-                let mut a = instr.as_bytes()[1];
-                let mut b = instr.as_bytes()[3];
-                Some(Instruction::SwapDancers(a, b))
-            }
-            _ => unreachable!()
-        }
-    }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     instrs.push(Instruction::Rotate(rotated_by));
     instrs
 }

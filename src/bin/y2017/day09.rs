@@ -21,13 +21,13 @@ pub fn eval(s: &str) -> (usize, usize) {
             match ch {
                 b'{' => {
                     in_groups += 1;
-                },
+                }
                 b'}' => {
                     total += in_groups;
                     in_groups -= 1;
-                },
+                }
                 b'<' => in_garbage = true,
-                _ => {},
+                _ => {}
             }
         }
     }

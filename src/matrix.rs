@@ -1,5 +1,5 @@
 use std::fmt;
-use {VecLike, BitVec};
+use {BitVec, VecLike};
 use smallvec::SmallVec;
 use std::marker::PhantomData;
 
@@ -100,7 +100,8 @@ impl Matrix<bool, BitVec> {
 impl<T, C> Matrix<T, C>
 where
     T: Copy + Default,
-    C: VecLike<T> {
+    C: VecLike<T>,
+{
     pub fn new(rows: usize, cols: usize) -> Self {
         Matrix {
             matrix: C::with_capacity(rows * cols),
@@ -123,7 +124,12 @@ where
                 rows += 1;
                 continue;
             }
-            assert!(b == ON || b == OFF, "unexpected byte {:?} in {:?}", b as char, pattern);
+            assert!(
+                b == ON || b == OFF,
+                "unexpected byte {:?} in {:?}",
+                b as char,
+                pattern
+            );
             if b == ON {
                 matrix.set(idx, present);
             } else {
@@ -167,7 +173,7 @@ where
     fn insert_column_right(&mut self) {
         let mut inserted = 0;
         for row in 0..self.rows {
-            let idx = row*self.cols + self.cols + inserted;
+            let idx = row * self.cols + self.cols + inserted;
             inserted += 1;
             self.matrix.insert(idx, T::default());
         }
@@ -184,7 +190,7 @@ where
 
     pub fn get(&self, row: usize, col: usize) -> Option<T> {
         if col < self.cols && row < self.rows {
-            Some(self.matrix.get(row*self.cols + col))
+            Some(self.matrix.get(row * self.cols + col))
         } else {
             None
         }
@@ -203,11 +209,11 @@ where
         self.ensure_space(row, col);
         debug_assert!(col <= self.cols);
         debug_assert!(row <= self.rows);
-        self.matrix.set(row*self.cols + col, v);
+        self.matrix.set(row * self.cols + col, v);
     }
 
     fn set_direct(&mut self, row: usize, col: usize, v: T) {
-        self.matrix.set(row*self.cols + col, v);
+        self.matrix.set(row * self.cols + col, v);
     }
 
     pub fn transpose(&mut self) {
@@ -254,9 +260,11 @@ where
         let rows = self.rows;
         let cols = self.cols;
         self.matrix.fill(
-            (0..rows).into_iter()
+            (0..rows)
+                .into_iter()
                 .flat_map(|row| (0..cols).into_iter().map(move |col| (row, col)))
-                .map(|(row, col)| other.matrix.get(start + row*other.cols + col)));
+                .map(|(row, col)| other.matrix.get(start + row * other.cols + col)),
+        );
     }
 
     // Loads from the other matrix, using it's indices to fill our own.  N.B.
@@ -265,8 +273,8 @@ where
     pub fn set_from(&mut self, start: usize, other: &Self) {
         for row in 0..other.rows {
             for col in 0..other.cols {
-                let o = other.matrix.get(row*other.cols + col);
-                let idx = start + row*self.cols + col;
+                let o = other.matrix.get(row * other.cols + col);
+                let idx = start + row * self.cols + col;
                 self.matrix.set(idx, o);
             }
         }
@@ -318,7 +326,7 @@ impl<'a, 'b, C: VecLike<bool>> fmt::Debug for DebugMatrix<'a, 'b, bool, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.0.rows {
             for j in 0..self.0.cols {
-                let idx = i*self.0.cols + j;
+                let idx = i * self.0.cols + j;
                 if self.0.matrix.get(idx) {
                     write!(f, "#")?;
                 } else {
@@ -345,7 +353,10 @@ fn matrix_dbg_2() {
 
 #[test]
 fn matrix_dbg_3() {
-    assert_eq!(format!("{:?}", Matrix::interpret_bool(".#./..#/...")), ".#./..#/...");
+    assert_eq!(
+        format!("{:?}", Matrix::interpret_bool(".#./..#/...")),
+        ".#./..#/..."
+    );
 }
 
 #[test]
@@ -357,7 +368,8 @@ fn matrix_insert_left() {
 
 #[test]
 fn matrix_insert_left_1() {
-    let mut m = Matrix::interpret_bool("
+    let mut m = Matrix::interpret_bool(
+        "
 ....#..#.
 ....#..#.
 ....#..#.
@@ -370,9 +382,13 @@ fn matrix_insert_left_1() {
 ....#..#.
 ....#..#.
 ....#..#.
-");
+",
+    );
     m.insert_column_left();
-    assert_eq!(m, Matrix::interpret_bool("
+    assert_eq!(
+        m,
+        Matrix::interpret_bool(
+            "
 .....#..#.
 .....#..#.
 .....#..#.
@@ -385,9 +401,10 @@ fn matrix_insert_left_1() {
 .....#..#.
 .....#..#.
 .....#..#.
-"));
+"
+        )
+    );
 }
-
 
 #[test]
 fn matrix_insert_right() {
@@ -398,7 +415,8 @@ fn matrix_insert_right() {
 
 #[test]
 fn matrix_insert_right_1() {
-    let mut m = Matrix::interpret_bool("
+    let mut m = Matrix::interpret_bool(
+        "
 ....#..#.
 ....#..#.
 ....#..#.
@@ -411,9 +429,13 @@ fn matrix_insert_right_1() {
 ....#..#.
 ....#..#.
 ....#..#.
-");
+",
+    );
     m.insert_column_right();
-    assert_eq!(m, Matrix::interpret_bool("
+    assert_eq!(
+        m,
+        Matrix::interpret_bool(
+            "
 ....#..#..
 ....#..#..
 ....#..#..
@@ -426,7 +448,9 @@ fn matrix_insert_right_1() {
 ....#..#..
 ....#..#..
 ....#..#..
-"));
+"
+        )
+    );
 }
 
 #[test]
@@ -438,7 +462,8 @@ fn matrix_insert_row_top() {
 
 #[test]
 fn matrix_insert_row_top_1() {
-    let mut m = Matrix::interpret_bool("
+    let mut m = Matrix::interpret_bool(
+        "
 ....#..#.
 ....#..#.
 ....#..#.
@@ -451,9 +476,13 @@ fn matrix_insert_row_top_1() {
 ....#..#.
 ....#..#.
 ....#..#.
-");
+",
+    );
     m.insert_row_top();
-    assert_eq!(m, Matrix::interpret_bool("
+    assert_eq!(
+        m,
+        Matrix::interpret_bool(
+            "
 .........
 ....#..#.
 ....#..#.
@@ -467,6 +496,7 @@ fn matrix_insert_row_top_1() {
 ....#..#.
 ....#..#.
 ....#..#.
-"));
+"
+        )
+    );
 }
-

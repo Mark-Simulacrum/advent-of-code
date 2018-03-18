@@ -86,5 +86,8 @@ fn part2_3() {
 
 #[test]
 fn part2_4() {
-    assert_eq!(part2("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN"), 445);
+    assert_eq!(
+        part2("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN"),
+        445
+    );
 }

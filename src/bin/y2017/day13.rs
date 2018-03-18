@@ -28,7 +28,10 @@ impl Layers {
                 range: range.saturating_sub(1),
             });
         }
-        Layers { layers: layers, scanner: 0 }
+        Layers {
+            layers: layers,
+            scanner: 0,
+        }
     }
 
     fn run(&mut self) -> usize {
@@ -42,7 +45,6 @@ impl Layers {
         }
         severity
     }
-
 }
 
 pub fn part1(s: &str) -> usize {
@@ -60,7 +62,6 @@ fn modulo(a: i128, b: i128) -> u64 {
 // Algorithm taken from
 // https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Pseudocode.
 #[allow(unused)]
-
 #[derive(Copy, Clone)]
 struct ExtendedGcd {
     gcd: i128,
@@ -164,7 +165,7 @@ impl Congruence {
     fn combine(self, other: Congruence) -> Option<Congruence> {
         let ExtendedGcd { gcd, m, n } = ExtendedGcd::new(self.n, other.n);
         if modulo(self.a, gcd) == modulo(other.a, gcd) {
-            let lcm = (self.n*other.n) / gcd;
+            let lcm = (self.n * other.n) / gcd;
             let ret = Congruence {
                 n: lcm,
                 a: (other.a * m * self.n + self.a * n * other.n) / gcd,
@@ -187,20 +188,34 @@ impl Congruence {
 
 pub fn part2(s: &str) -> u64 {
     let layers = Layers::parse(s);
-    let ranges = layers.layers.iter()
+    let ranges = layers
+        .layers
+        .iter()
         .enumerate()
         .filter(|&(_, l)| l.range != 0)
         .map(|(i, l)| (i as u64, (l.range as u64) * 2))
-        .map(|(d, r)| Congruence { n: r as i128, a: modulo(-(d as i128), r as i128) as i128 })
+        .map(|(d, r)| Congruence {
+            n: r as i128,
+            a: modulo(-(d as i128), r as i128) as i128,
+        })
         .collect::<Vec<_>>();
     let mut ranges_map = VecMap::with_capacity(ranges.len());
     for &Congruence { n: range, a: x } in &ranges {
         ranges_map.get_or_insert_with(range, Vec::new).push(x as u8);
     }
-    let mut system = ranges_map.into_iter().map(|(range, xs)| {
-        (0..range as u8).into_iter().filter(|n| !xs.contains(n))
-            .map(|x| Congruence { n: range, a: x as i128 }).collect::<Vec<_>>()
-    }).collect::<Vec<_>>();
+    let mut system = ranges_map
+        .into_iter()
+        .map(|(range, xs)| {
+            (0..range as u8)
+                .into_iter()
+                .filter(|n| !xs.contains(n))
+                .map(|x| Congruence {
+                    n: range,
+                    a: x as i128,
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
     system.sort_by_key(|c| c[0].n);
     while system.len() >= 2 {
         let mut solutions = Vec::with_capacity(system[0].len() * system[1].len());
@@ -211,7 +226,12 @@ pub fn part2(s: &str) -> u64 {
                 }
             }
         }
-        assert!(!solutions.is_empty(), "{:?} and {:?} has no solutions", system[0], system[1]);
+        assert!(
+            !solutions.is_empty(),
+            "{:?} and {:?} has no solutions",
+            system[0],
+            system[1]
+        );
         solutions.sort_unstable();
         solutions.dedup();
         system[0] = solutions;
@@ -239,7 +259,6 @@ fn part2_1() {
 fn part2_actual() {
     assert_eq!(part2(INPUT), 3966414);
 }
-
 
 #[cfg(test)]
 static EXAMPLE: &str = "

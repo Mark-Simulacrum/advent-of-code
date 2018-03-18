@@ -1,12 +1,21 @@
 fn eval(s: &str) -> (Vec<Bridge>, usize) {
-    let ports = s.trim().lines().map(|line| {
-        let mut i = line.split('/').map(|x| x.parse::<u8>().unwrap());
-        let a = i.next().unwrap();
-        let b = i.next().unwrap();
-        if a > b { (a, b) } else { (b, a) }
-    }).collect::<Vec<_>>();
+    let ports = s.trim()
+        .lines()
+        .map(|line| {
+            let mut i = line.split('/').map(|x| x.parse::<u8>().unwrap());
+            let a = i.next().unwrap();
+            let b = i.next().unwrap();
+            if a > b {
+                (a, b)
+            } else {
+                (b, a)
+            }
+        })
+        .collect::<Vec<_>>();
     let mut handled = Vec::with_capacity(ports.len() * (ports.len() - 1));
-    let mut bridges = ports.iter().enumerate()
+    let mut bridges = ports
+        .iter()
+        .enumerate()
         .filter(|&(_, x)| x.1 == 0)
         .map(|(i, c)| Bridge {
             strength: c.1 as usize + c.0 as usize,
@@ -16,7 +25,8 @@ fn eval(s: &str) -> (Vec<Bridge>, usize) {
                 p.swap_remove(i);
                 p
             },
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     while let Some(bridge) = bridges.pop() {
         for (pos, conn) in bridge.valid_connectors() {
             let mut next = bridge.clone();
@@ -38,7 +48,7 @@ struct Bridge {
 }
 
 impl Bridge {
-    fn valid_connectors<'a>(&'a self) -> impl Iterator<Item=(usize, u8)> + 'a {
+    fn valid_connectors<'a>(&'a self) -> impl Iterator<Item = (usize, u8)> + 'a {
         let to = self.last_connector;
         // return the position and the unused connector
         self.ports.iter().enumerate().filter_map(move |(i, port)| {
@@ -59,12 +69,21 @@ impl Bridge {
 
 pub fn part1(s: &str) -> usize {
     let (handled, _) = eval(s);
-    handled.into_iter().map(|bridge| bridge.strength).max().unwrap()
+    handled
+        .into_iter()
+        .map(|bridge| bridge.strength)
+        .max()
+        .unwrap()
 }
 
 pub fn part2(s: &str) -> usize {
     let (handled, ports) = eval(s);
-    handled.into_iter().map(|bridge| (bridge.length(ports), bridge.strength)).max().unwrap().1
+    handled
+        .into_iter()
+        .map(|bridge| (bridge.length(ports), bridge.strength))
+        .max()
+        .unwrap()
+        .1
 }
 
 #[test]

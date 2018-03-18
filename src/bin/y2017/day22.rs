@@ -1,4 +1,4 @@
-use advent_of_code::{VecLike, BitVec, Matrix, Grid};
+use advent_of_code::{BitVec, Grid, Matrix, VecLike};
 
 #[derive(Copy, Clone, Debug)]
 enum NodeState {
@@ -22,7 +22,12 @@ fn load<V: Copy + Default, C: VecLike<V>>(s: &str, empty: V, present: V) -> Grid
 }
 
 #[derive(Copy, Clone, Debug)]
-enum Direction { Left, Right, Up, Down }
+enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+}
 
 impl Direction {
     #[inline(always)]
@@ -133,7 +138,6 @@ fn part2_1() {
 fn part2_actual() {
     assert_eq!(part2(INPUT), 2511991);
 }
-
 
 #[cfg(test)]
 static EXAMPLE: &str = "

@@ -29,7 +29,7 @@ impl VecLike<bool> for BitVec {
         *cell |= (v as u64) << Self::bit_in_cell(i);
     }
 
-    fn fill<I: Iterator<Item=bool>>(&mut self, iter: I) {
+    fn fill<I: Iterator<Item = bool>>(&mut self, iter: I) {
         let mut cell_idx = 0;
         let mut value = 0;
         let mut cleared = true;
@@ -66,7 +66,9 @@ impl BitVec {
     }
 
     fn get_cell_idx_mut(&mut self, index: usize) -> &mut u64 {
-        while index >= self.0.len() { self.0.push(0); }
+        while index >= self.0.len() {
+            self.0.push(0);
+        }
         &mut self.0[index]
     }
 
@@ -112,7 +114,11 @@ impl fmt::Debug for BitVec {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (i, bits) in self.0.iter().enumerate() {
             for i in (0..8).into_iter().rev() {
-                write!(f, "{:08b}", ((bits & ((2u64.pow(8) - 1) << i*8)) >> i*8) as u8)?;
+                write!(
+                    f,
+                    "{:08b}",
+                    ((bits & ((2u64.pow(8) - 1) << i * 8)) >> i * 8) as u8
+                )?;
                 if i != 0 {
                     write!(f, ".")?;
                 }
