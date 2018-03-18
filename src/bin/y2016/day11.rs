@@ -4,77 +4,89 @@
 // Goal: Bring all RTGs and microchips to 4th floor.
 
 use std::cmp::{self, Ord, Ordering, PartialOrd};
+use std::fmt;
 use std::usize;
 use std::u16;
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::HashSet;
+use std::collections::BinaryHeap;
+use std::hash::{Hash, Hasher};
 
 use itertools::Itertools;
 
+struct Executor {
+    min_steps: usize,
+    visited: HashSet<Floors>,
+    potential_states: BinaryHeap<State>,
+}
+
+impl Executor {
+    fn new() -> Executor {
+        Executor {
+            min_steps: usize::MAX,
+            visited: HashSet::new(),
+            potential_states: BinaryHeap::new(),
+        }
+    }
+
+    fn push_state(&mut self, state: State) {
+        if state.steps > self.min_steps {
+            return;
+        }
+        if state.is_done() {
+            self.min_steps = cmp::min(self.min_steps, state.steps);
+            return;
+        }
+
+        if self.visited.insert(state.floors) {
+            self.potential_states.push(state);
+        }
+    }
+
+    fn next_state(&mut self) -> Option<State> {
+        self.potential_states.pop()
+    }
+}
+
 fn exec(floors: Floors) -> usize {
-    let mut min_steps = usize::MAX;
-    let mut visited = HashSet::new();
-    let mut potential_states = BinaryHeap::new();
-    potential_states.push(State {
+    let mut executor = Executor::new();
+    executor.push_state(State {
         steps: 0,
         floors: floors,
     });
-    while let Some(state) = potential_states.pop() {
-        if state.is_done() {
-            min_steps = cmp::min(min_steps, state.steps);
-            continue;
-        }
-        if !visited.insert(state.floors.to_bits() as usize) {
-            visited.reserve(potential_states.len());
-            continue;
-        }
-        let i = state
-            .floors
-            .0
-            .iter()
-            .position(|f| f.has_elevator())
-            .unwrap();
+    while let Some(state) = executor.next_state() {
+        let i = state.elevator_floor_idx();
         let elevator_floor = state.floors.0[i].0;
 
-        let mut move_two = false;
-        for (a, b) in elevator_floor.iter().tuple_combinations() {
-            if state.floors.can_move_up(i, a, Some(b)) {
-                move_two = true;
-                potential_states.push(state.with_floors(state.floors.moving(i, i + 1, a, Some(b))));
+        let mut move_two_up = false;
+        let mut move_one_down = false;
+        for a in elevator_floor.into_iter() {
+            if let Some(floors) = state.floors.move_down(i, a, None) {
+                move_one_down = true;
+                executor.push_state(state.with_floors(floors));
             }
         }
-        let mut move_one_down = false;
-        for a in elevator_floor.iter() {
-            if state.floors.can_move_down(i, a, None) {
-                move_one_down = true;
-                potential_states.push(state.with_floors(state.floors.moving(i, i - 1, a, None)));
+        for (a, b) in elevator_floor.into_iter().tuple_combinations() {
+            if let Some(floors) = state.floors.move_up(i, a, Some(b)) {
+                move_two_up = true;
+                executor.push_state(state.with_floors(floors));
             }
 
-            if !move_two {
-                if state.floors.can_move_up(i, a, None) {
-                    potential_states.push(state.with_floors(state.floors.moving(
-                        i,
-                        i + 1,
-                        a,
-                        None,
-                    )));
+            if !move_one_down {
+                if let Some(floors) = state.floors.move_down(i, a, Some(b)) {
+                    executor.push_state(state.with_floors(floors));
                 }
             }
         }
-
-        if !move_one_down {
-            for (a, b) in elevator_floor.iter().tuple_combinations() {
-                if state.floors.can_move_down(i, a, Some(b)) {
-                    potential_states.push(state.with_floors(state.floors.moving(
-                        i,
-                        i - 1,
-                        a,
-                        Some(b),
-                    )));
+        if !move_two_up {
+            for a in elevator_floor.into_iter() {
+                if let Some(floors) = state.floors.move_up(i, a, None) {
+                    executor.push_state(state.with_floors(floors));
                 }
             }
         }
     }
-    min_steps
+    println!("visited: {:?}", executor.visited.len());
+    executor.min_steps
 }
 
 pub fn part1(s: &[Item]) -> usize {
@@ -108,6 +120,10 @@ impl Ord for State {
 }
 
 impl State {
+    fn elevator_floor_idx(&self) -> usize {
+        self.floors.0.iter().position(|f| f.has_elevator()).unwrap()
+    }
+
     fn with_floors(&self, floors: Floors) -> Self {
         State {
             steps: self.steps + 1,
@@ -122,18 +138,28 @@ impl State {
     }
 }
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone)]
 pub struct Floor(Item);
 
 impl Floor {
-    fn to_bits(self) -> u16 {
-        self.0.bits
-    }
+    #[inline(always)]
     fn set_elevator(&mut self, e: bool) {
         self.0.set(Item::ELEVATOR, e)
     }
+    #[inline(always)]
     fn has_elevator(&self) -> bool {
         self.0.contains(Item::ELEVATOR)
+    }
+
+    // -> (paired, unpaired chips, unpaired generators)
+    fn to_hashable(self) -> (u8, Item) {
+        let generator = self.0 & Item::GENERATOR;
+        let microchip = self.0.to_generator();
+        let pairs = generator & microchip;
+        let paired = pairs.bits.count_ones() as u8;
+        let unpaired = self.0 & !(pairs | pairs.to_microchip());
+
+        (paired, unpaired)
     }
 
     fn departing_with(self, a: Item, b: Option<Item>) -> Floor {
@@ -147,74 +173,88 @@ impl Floor {
     }
 
     // Either all microchips have a generator, or there are no generators
-    fn is_valid_with(&self, a: Item, b: Option<Item>) -> bool {
-        let mut item = self.0;
-        item.insert(a);
-        if let Some(b) = b {
-            item.insert(b);
-        }
-        if item.is_empty() {
+    fn is_valid(self) -> bool {
+        if self.0.is_empty() {
             return true;
         }
-        if (item & Item::GENERATOR).is_empty() {
+        if (self.0 & Item::GENERATOR).is_empty() {
             return true;
         }
         // Shift all microchips to generators, then check that all of those generators are present
-        item.to_generator().contains(item & Item::GENERATOR)
-    }
-}
-
-bitflags! {
-    pub struct Item: u16 {
-        const THULIUM_GENERATOR    = 0b00000000_00000001;
-        const THULIUM_MICROCHIP    = 0b00000000_00000010;
-        const PLUTONIUM_GENERATOR  = 0b00000000_00000100;
-        const PLUTONIUM_MICROCHIP  = 0b00000000_00001000;
-        const STRONTIUM_GENERATOR  = 0b00000000_00010000;
-        const STRONTIUM_MICROCHIP  = 0b00000000_00100000;
-        const PROMETHIUM_GENERATOR = 0b00000000_01000000;
-        const PROMETHIUM_MICROCHIP = 0b00000000_10000000;
-        const RUTHENIUM_GENERATOR  = 0b00000001_00000000;
-        const RUTHENIUM_MICROCHIP  = 0b00000010_00000000;
-        const ELERIUM_GENERATOR    = 0b00000100_00000000;
-        const ELERIUM_MICROCHIP    = 0b00001000_00000000;
-        const DILITHIUM_GENERATOR  = 0b00010000_00000000;
-        const DILITHIUM_MICROCHIP  = 0b00100000_00000000;
-
-        const MICROCHIP            = 0b00101010_10101010;
-        const GENERATOR            = 0b00010101_01010101;
-        const ELEVATOR             = 0b01000000_00000000;
+        self.0.to_generator().contains(self.0 & Item::GENERATOR)
     }
 }
 
 // Space for 4 floors.
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone)]
 struct Floors([Floor; 4]);
 
-impl Floors {
-    fn to_bits(self) -> u64 {
-        (self.0[0].to_bits() as u64) << (16 * 0) | (self.0[1].to_bits() as u64) << (16 * 1)
-            | (self.0[2].to_bits() as u64) << (16 * 2)
-            | (self.0[3].to_bits() as u64) << (16 * 3)
+impl Hash for Floors {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0[0].to_hashable().hash(state);
+        self.0[1].to_hashable().hash(state);
+        self.0[2].to_hashable().hash(state);
+        self.0[3].to_hashable().hash(state);
     }
+}
 
+impl PartialEq for Floors {
+    fn eq(&self, other: &Self) -> bool {
+        self.0[0].to_hashable() == other.0[0].to_hashable()
+            && self.0[1].to_hashable() == other.0[1].to_hashable()
+            && self.0[2].to_hashable() == other.0[2].to_hashable()
+            && self.0[3].to_hashable() == other.0[3].to_hashable()
+    }
+}
+
+impl Eq for Floors {}
+
+impl fmt::Debug for Floors {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "F4: {:?}\n", self.0[3].0)?;
+        write!(f, "F3: {:?}\n", self.0[2].0)?;
+        write!(f, "F2: {:?}\n", self.0[1].0)?;
+        write!(f, "F1: {:?}", self.0[0].0)
+    }
+}
+
+impl Floors {
     fn new(s: &[Item]) -> Floors {
-        assert_eq!(s.len(), 4);
+        debug_assert_eq!(s.len(), 4);
         Floors([Floor(s[0]), Floor(s[1]), Floor(s[2]), Floor(s[3])])
     }
 
-    fn can_move_down(self, from: usize, a: Item, b: Option<Item>) -> bool {
+    fn move_down(self, from: usize, a: Item, b: Option<Item>) -> Option<Floors> {
         if from == 0 {
-            return false;
+            return None;
         }
-        !self.0[from - 1].0.is_empty() && self.0[from - 1].is_valid_with(a, b)
+
+        // Don't move things down to empty floors
+        if self.0[from - 1].0.is_empty() {
+            return None;
+        }
+
+        let floors = self.moving(from, from - 1, a, b);
+
+        if floors.0[from - 1].is_valid() {
+            Some(floors)
+        } else {
+            None
+        }
     }
 
-    fn can_move_up(self, from: usize, a: Item, b: Option<Item>) -> bool {
+    fn move_up(self, from: usize, a: Item, b: Option<Item>) -> Option<Floors> {
         if from + 1 >= self.0.len() {
-            return false;
+            return None;
         }
-        self.0[from + 1].is_valid_with(a, b)
+
+        let floors = self.moving(from, from + 1, a, b);
+
+        if floors.0[from + 1].is_valid() {
+            Some(floors)
+        } else {
+            None
+        }
     }
 
     fn moving(self, from: usize, to: usize, a: Item, b: Option<Item>) -> Floors {
@@ -272,9 +312,36 @@ impl Iterator for ItemIter {
     }
 }
 
+bitflags! {
+    pub struct Item: u16 {
+        const THULIUM_GENERATOR    = 0b00000000_00000001;
+        const THULIUM_MICROCHIP    = 0b00000000_00000010;
+        const PLUTONIUM_GENERATOR  = 0b00000000_00000100;
+        const PLUTONIUM_MICROCHIP  = 0b00000000_00001000;
+        const STRONTIUM_GENERATOR  = 0b00000000_00010000;
+        const STRONTIUM_MICROCHIP  = 0b00000000_00100000;
+        const PROMETHIUM_GENERATOR = 0b00000000_01000000;
+        const PROMETHIUM_MICROCHIP = 0b00000000_10000000;
+        const RUTHENIUM_GENERATOR  = 0b00000001_00000000;
+        const RUTHENIUM_MICROCHIP  = 0b00000010_00000000;
+        const ELERIUM_GENERATOR    = 0b00000100_00000000;
+        const ELERIUM_MICROCHIP    = 0b00001000_00000000;
+        const DILITHIUM_GENERATOR  = 0b00010000_00000000;
+        const DILITHIUM_MICROCHIP  = 0b00100000_00000000;
+
+        const MICROCHIP            = 0b00101010_10101010;
+        const GENERATOR            = 0b00010101_01010101;
+        const ELEVATOR             = 0b01000000_00000000;
+    }
+}
+
 impl Item {
-    fn iter(self) -> ItemIter {
+    fn into_iter(self) -> ItemIter {
         ItemIter { item: self }
+    }
+
+    fn to_microchip(self) -> Item {
+        Item::from_bits((self & Item::GENERATOR).bits() << 1).unwrap()
     }
 
     fn to_generator(self) -> Item {

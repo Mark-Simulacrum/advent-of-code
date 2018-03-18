@@ -1,4 +1,5 @@
-#![feature(test, option_filter, drain_filter)]
+#![feature(nonzero, test, option_filter, drain_filter)]
+
 #[macro_use]
 extern crate advent_of_code;
 #[macro_use]

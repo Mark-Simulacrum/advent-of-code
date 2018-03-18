@@ -309,15 +309,17 @@ macro_rules! gen {
                         let start = ::std::time::Instant::now();
                         let res = $day::part1($day::INPUT);
                         let elapsed = start.elapsed();
-                        println!("{}::part1 = {} ({}s {}ns)",
-                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                        println!("{}::part1 = {} ({}s {}ns or {}s {}ms)",
+                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos(),
+                                elapsed.as_secs(), elapsed.subsec_nanos() / 1_000_000);
                     }
                     {
                         let start = ::std::time::Instant::now();
                         let res = $day::part2($day::INPUT);
                         let elapsed = start.elapsed();
-                        println!("{}::part2 = {} ({}s {}ns)",
-                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos());
+                        println!("{}::part2 = {} ({}s {}ns or {}s {}ms)",
+                            stringify!($day), res, elapsed.as_secs(), elapsed.subsec_nanos(),
+                                elapsed.as_secs(), elapsed.subsec_nanos() / 1_000_000);
                     }
                 }
             )+
