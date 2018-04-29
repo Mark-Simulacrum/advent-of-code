@@ -28,6 +28,7 @@ path = "src/bin/y2017/main.rs"
 bench = true
 
 [profile.release]
+debug = true
 incremental = false
 codegen-units = 1
 
