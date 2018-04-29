@@ -1,7 +1,7 @@
-use VecLike;
 use smallvec::SmallVec;
 use std::fmt;
 use std::mem;
+use VecLike;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BitVec(SmallVec<[u64; 1]>);
@@ -58,6 +58,12 @@ impl BitVec {
     const BITS_PER_CELL: usize = mem::size_of::<u64>() * 8;
     pub fn count_ones(&self) -> u32 {
         self.0.iter().map(|c| c.count_ones()).sum()
+    }
+
+    pub fn clear(&mut self) {
+        for cell in self.0.iter_mut() {
+            *cell = 0;
+        }
     }
 
     fn get_cell_mut(&mut self, i: usize) -> &mut u64 {
