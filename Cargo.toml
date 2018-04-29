@@ -13,6 +13,9 @@ memchr = "2.0"
 quickcheck = "0.6"
 primal = "0.2"
 fnv = "1.0"
+openssl = "0.10"
+itoa = "0.4"
+md5 = "0.3"
 
 [[bin]]
 name = "y2016"
@@ -25,7 +28,6 @@ path = "src/bin/y2017/main.rs"
 bench = true
 
 [profile.release]
-debug = true
 incremental = false
 codegen-units = 1
 

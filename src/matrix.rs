@@ -1,7 +1,7 @@
-use std::fmt;
-use {BitVec, VecLike};
 use smallvec::SmallVec;
+use std::fmt;
 use std::marker::PhantomData;
+use {BitVec, VecLike};
 
 const ON: u8 = b'#';
 const OFF: u8 = b'.';

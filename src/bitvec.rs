@@ -1,7 +1,7 @@
-use smallvec::SmallVec;
-use std::mem;
-use std::fmt;
 use VecLike;
+use smallvec::SmallVec;
+use std::fmt;
+use std::mem;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BitVec(SmallVec<[u64; 1]>);

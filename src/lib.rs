@@ -1,4 +1,4 @@
-#![feature(test, swap_nonoverlapping, conservative_impl_trait, i128_type, i128)]
+#![feature(test, swap_nonoverlapping, i128)]
 
 #[macro_use]
 extern crate failure;
@@ -69,6 +69,14 @@ where
         VecMap {
             v: Vec::with_capacity(cap),
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.v.len()
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.v.capacity()
     }
 
     pub fn insert(&mut self, key: K, value: V) {
