@@ -2,10 +2,16 @@
 
 #[macro_use]
 extern crate failure;
+extern crate itoa;
+extern crate md5;
 extern crate memchr;
 extern crate smallvec;
 
 use std::ptr;
+
+mod md5iter;
+
+pub use md5iter::HashIter;
 
 mod bitvec;
 mod matrix;
