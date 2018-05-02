@@ -56,6 +56,19 @@ impl VecLike<bool> for BitVec {
 
 impl BitVec {
     const BITS_PER_CELL: usize = mem::size_of::<u64>() * 8;
+
+    pub fn from_bools<I: Iterator<Item = bool>>(bits: I) -> BitVec {
+        let mut x = BitVec::new();
+        for (i, bit) in bits.enumerate() {
+            x.set(i, bit);
+        }
+        x
+    }
+
+    pub fn from_bits(bits: u64) -> BitVec {
+        BitVec(SmallVec::from([bits]))
+    }
+
     pub fn count_ones(&self) -> u32 {
         self.0.iter().map(|c| c.count_ones()).sum()
     }
