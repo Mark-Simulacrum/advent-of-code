@@ -83,4 +83,14 @@ pub fn part2(s: &str) -> usize {
     compute(s, true)
 }
 
+#[test]
+fn part1_1() {
+    assert_eq!(part1(INPUT), 121834);
+}
+
+#[test]
+fn part2_1() {
+    assert_eq!(part2(INPUT), 3208099);
+}
+
 pub const INPUT: &str = "jlmsuwbz";

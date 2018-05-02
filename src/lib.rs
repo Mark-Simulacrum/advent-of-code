@@ -15,6 +15,7 @@ pub use md5iter::HashIter;
 
 mod bitvec;
 mod matrix;
+pub mod modulo_solver;
 pub use bitvec::BitVec;
 pub use matrix::{Grid, Matrix};
 
