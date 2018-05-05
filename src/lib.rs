@@ -315,7 +315,7 @@ pub fn lo_nib(b: u8) -> u8 {
 
 #[macro_export]
 macro_rules! gen {
-    ($($day:ident),+) => {
+    ($($day:ident),+$(,)*) => {
         $(
             mod $day;
         )+
