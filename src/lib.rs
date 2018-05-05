@@ -303,6 +303,16 @@ fn parser_consume_until_no_exist() {
     assert_eq!(Parser::new(b"aaa").consume_until(b'x'), 3);
 }
 
+#[inline]
+pub fn hi_nib(b: u8) -> u8 {
+    (b >> 4) & 0x0f
+}
+
+#[inline]
+pub fn lo_nib(b: u8) -> u8 {
+    b & 0x0f
+}
+
 #[macro_export]
 macro_rules! gen {
     ($($day:ident),+) => {
