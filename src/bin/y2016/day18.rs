@@ -1,4 +1,3 @@
-use std::fmt;
 use std::iter;
 
 use itertools::Itertools;
@@ -14,15 +13,6 @@ fn parse(s: &str) -> BitVec {
             _ => unreachable!("unexpected char {:?}", *b as char),
         })
         .collect()
-}
-
-fn print(v: &BitVec) {
-    eprintln!(
-        "{}",
-        v.iter()
-            .map(|x| if x { '^' } else { '.' })
-            .collect::<String>()
-    );
 }
 
 fn to_next_row(previous_row: impl Iterator<Item = bool>) -> BitVec {
