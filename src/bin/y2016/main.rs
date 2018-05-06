@@ -8,6 +8,7 @@ extern crate itertools;
 extern crate itoa;
 extern crate md5;
 extern crate openssl;
+extern crate permutohedron;
 extern crate petgraph;
 extern crate smallvec;
 extern crate test;

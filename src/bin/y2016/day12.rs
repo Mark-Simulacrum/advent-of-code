@@ -1,5 +1,5 @@
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-enum Register {
+pub enum Register {
     A,
     B,
     C,
@@ -7,7 +7,7 @@ enum Register {
 }
 
 impl Register {
-    fn parse(s: &str) -> Register {
+    pub fn parse(s: &str) -> Register {
         match s.chars().nth(0).unwrap() {
             'a' => Register::A,
             'b' => Register::B,
@@ -22,13 +22,13 @@ impl Register {
 }
 
 #[derive(Copy, Clone, Debug)]
-enum Value {
+pub enum Value {
     Register(Register),
     Constant(i32),
 }
 
 impl Value {
-    fn parse(s: &str) -> Value {
+    pub fn parse(s: &str) -> Value {
         let first_word = s.trim_left().split(' ').next().unwrap();
         match first_word.parse::<i32>() {
             Ok(value) => Value::Constant(value),
@@ -38,33 +38,38 @@ impl Value {
 }
 
 #[derive(Copy, Clone, Debug)]
-enum Instruction {
-    Copy(Value, Register),
+pub enum Instruction {
+    Copy(Value, Value),
+    Jump(Value, Value),
     Increment(Register),
     Decrement(Register),
-    Jump(Value, i32),
+    Toggle(Register),
 }
 
 impl Instruction {
-    fn parse(s: &str) -> Instruction {
+    pub fn parse(s: &str) -> Instruction {
         let second_word = || s.split(' ').nth(1).unwrap();
         let third_word = || s.split(' ').nth(2).unwrap();
         match &s[0..3] {
-            "cpy" => Instruction::Copy(Value::parse(&s[3..]), Register::parse(third_word())),
+            "cpy" => Instruction::Copy(
+                Value::parse(&s[3..]),
+                Value::Register(Register::parse(third_word())),
+            ),
             "inc" => Instruction::Increment(Register::parse(second_word())),
             "dec" => Instruction::Decrement(Register::parse(second_word())),
-            "jnz" => Instruction::Jump(Value::parse(&s[3..]), third_word().parse::<i32>().unwrap()),
+            "tgl" => Instruction::Toggle(Register::parse(second_word())),
+            "jnz" => Instruction::Jump(Value::parse(&s[3..]), Value::parse(third_word())),
             invalid => unreachable!("invalid instruction: {}", invalid),
         }
     }
 }
 
 #[derive(Debug)]
-struct Memory {
-    a: i32,
-    b: i32,
-    c: i32,
-    d: i32,
+pub struct Memory {
+    pub a: i32,
+    pub b: i32,
+    pub c: i32,
+    pub d: i32,
 }
 
 impl Memory {
@@ -78,7 +83,7 @@ impl Memory {
         }
     }
 
-    fn get_mut(&mut self, to: Register) -> &mut i32 {
+    pub fn get_mut(&mut self, to: Register) -> &mut i32 {
         match to {
             Register::A => &mut self.a,
             Register::B => &mut self.b,
@@ -87,16 +92,20 @@ impl Memory {
         }
     }
 
-    fn eval(&mut self, instr: Instruction) -> i32 {
+    pub fn eval(&mut self, instr: Instruction) -> i32 {
         match instr {
-            Instruction::Copy(value, to) => *self.get_mut(to) = self.resolve(value),
+            Instruction::Copy(value, Value::Register(to)) => {
+                *self.get_mut(to) = self.resolve(value)
+            }
+            Instruction::Copy(_, Value::Constant(_)) => {}
             Instruction::Increment(reg) => *self.get_mut(reg) += 1,
             Instruction::Decrement(reg) => *self.get_mut(reg) -= 1,
             Instruction::Jump(value, offset) => {
                 if self.resolve(value) != 0 {
-                    return offset;
+                    return self.resolve(offset);
                 }
             }
+            Instruction::Toggle(_) => unreachable!(),
         }
 
         1
