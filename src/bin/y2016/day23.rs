@@ -25,6 +25,7 @@ fn compute(s: &str, eggs: usize) -> usize {
                     Instruction::Increment(a) => Instruction::Decrement(a),
                     Instruction::Decrement(a) => Instruction::Increment(a),
                     Instruction::Toggle(a) => Instruction::Increment(a),
+                    Instruction::Out(_) => unreachable!(),
                 };
             }
             idx += 1;

@@ -44,6 +44,7 @@ pub enum Instruction {
     Increment(Register),
     Decrement(Register),
     Toggle(Register),
+    Out(Value),
 }
 
 impl Instruction {
@@ -59,6 +60,7 @@ impl Instruction {
             "dec" => Instruction::Decrement(Register::parse(second_word())),
             "tgl" => Instruction::Toggle(Register::parse(second_word())),
             "jnz" => Instruction::Jump(Value::parse(&s[3..]), Value::parse(third_word())),
+            "out" => Instruction::Out(Value::parse(second_word())),
             invalid => unreachable!("invalid instruction: {}", invalid),
         }
     }
@@ -73,7 +75,7 @@ pub struct Memory {
 }
 
 impl Memory {
-    fn resolve(&self, value: Value) -> i32 {
+    pub fn resolve(&self, value: Value) -> i32 {
         match value {
             Value::Constant(v) => v,
             Value::Register(Register::A) => self.a,
@@ -106,6 +108,7 @@ impl Memory {
                 }
             }
             Instruction::Toggle(_) => unreachable!(),
+            Instruction::Out(_) => unreachable!(),
         }
 
         1
