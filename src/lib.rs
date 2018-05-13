@@ -6,6 +6,7 @@ extern crate itoa;
 extern crate md5;
 extern crate memchr;
 extern crate smallvec;
+extern crate test;
 
 use std::ptr;
 
@@ -314,13 +315,45 @@ pub fn lo_nib(b: u8) -> u8 {
 }
 
 #[macro_export]
+macro_rules! gen_single {
+    () => {
+        #[allow(unused)]
+        fn main() {
+            eprintln!("part1 = {}", part1(INPUT));
+            eprintln!("part2 = {}", part2(INPUT));
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! gen {
     ($($day:ident),+$(,)*) => {
         $(
             mod $day;
         )+
 
+        fn micros(v: ::std::time::Duration) -> u64 {
+            let nanos = v.as_secs() * 1_000_000_000 + (v.subsec_nanos() as u64);
+            nanos / 1_000
+        }
+
         fn main() {
+            let time: bool = std::env::var("TIME").ok().map(|t| t == "1").unwrap_or(false);
+
+            if time {
+                let total = ::std::time::Instant::now();
+                $(
+                    let start = ::std::time::Instant::now();
+                    test::black_box($day::part1($day::INPUT));
+                    test::black_box($day::part2($day::INPUT));
+                    let elapsed = start.elapsed();
+                    println!("{} {:10} μs", stringify!($day), micros(elapsed));
+                )+
+                println!("---------------------");
+                println!("Total {:10} μs", micros(total.elapsed()));
+                return;
+            }
+
             let bench: String = std::env::var("BENCH").ok().unwrap_or_else(|| String::from("0"));
             let filter: String = std::env::args().nth(1).unwrap_or_default();
             let iters: usize = std::env::var("BENCH_TIMES").ok()
