@@ -3,6 +3,9 @@ authors = ["Mark Simulacrum <mark.simulacrum@gmail.com>"]
 name = "advent-of-code"
 version = "0.1.0"
 
+[workspace]
+members = ["aoc-macro", "y2018"]
+
 [dependencies]
 failure = "0.1"
 smallvec = "0.6"
@@ -36,7 +39,6 @@ bench = false
 
 [profile.release]
 debug = true
-incremental = true
 
 [profile.bench]
 debug = true
