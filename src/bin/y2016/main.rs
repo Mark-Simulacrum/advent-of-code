@@ -1,4 +1,4 @@
-#![feature(nonzero, test, option_filter, drain_filter, in_band_lifetimes)]
+#![feature(test, drain_filter, in_band_lifetimes)]
 
 #[macro_use]
 extern crate advent_of_code;

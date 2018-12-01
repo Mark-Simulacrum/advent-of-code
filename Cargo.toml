@@ -10,13 +10,14 @@ itertools = "0.7"
 bitflags = "1.0"
 petgraph = "0.4.12"
 memchr = "2.0"
-quickcheck = "0.6"
+quickcheck = "0.7"
 primal = "0.2"
 fnv = "1.0"
 openssl = "0.10"
 itoa = "0.4"
-md5 = "0.3"
+md5 = "0.6"
 permutohedron = "0.2.4"
+packed_simd = "0.3.1"
 
 [[bin]]
 name = "y2016"
@@ -41,4 +42,3 @@ incremental = true
 debug = true
 incremental = false
 codegen-units = 1
-lto = true

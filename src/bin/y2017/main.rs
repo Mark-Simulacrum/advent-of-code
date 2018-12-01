@@ -1,4 +1,4 @@
-#![feature(const_fn, test, slice_rotate, i128, drain_filter, stdsimd)]
+#![feature(const_fn, test, drain_filter)]
 
 #[macro_use]
 extern crate advent_of_code;

@@ -67,6 +67,10 @@ impl VecLike<bool> for BitVec {
     fn get(&self, i: usize) -> bool {
         (self.get_cell(i) & (1 << Self::bit_in_cell(i))) != 0
     }
+
+    fn set_len(&mut self, l: usize) {
+        self.max_idx = l.saturating_sub(1);
+    }
 }
 
 impl FromIterator<bool> for BitVec {

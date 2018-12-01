@@ -151,6 +151,7 @@ where
             self.matrix.insert(0, T::default());
         }
         self.rows += 1;
+        self.matrix.set_len(self.rows * self.cols);
     }
 
     fn insert_row_bottom(&mut self) {
@@ -168,6 +169,7 @@ where
             inserted += 1;
         }
         self.cols += 1;
+        self.matrix.set_len(self.rows * self.cols);
     }
 
     fn insert_column_right(&mut self) {
@@ -363,7 +365,8 @@ fn matrix_dbg_3() {
 fn matrix_insert_left() {
     let mut m = Matrix::interpret_bool(".#/##");
     m.insert_column_left();
-    assert_eq!(m, Matrix::interpret_bool("..#/.##"));
+    let o = Matrix::interpret_bool("..#/.##");
+    assert_eq!(m, o);
 }
 
 #[test]

@@ -1,9 +1,8 @@
-#![feature(stdsimd)]
-
 #[macro_use]
 extern crate advent_of_code;
+extern crate packed_simd;
 
-use std::simd::u64x4;
+use packed_simd::u64x4;
 
 // See https://ariya.blogspot.com/2007/02/modulus-with-mersenne-prime.html
 // (num * factor) % 2147483648

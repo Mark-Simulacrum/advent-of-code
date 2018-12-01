@@ -1,6 +1,7 @@
 use advent_of_code::modulo_solver::{modulo, Congruence};
 
 fn solve(discs: &[Disc]) -> usize {
+    eprintln!("{:?}", discs);
     let congruence = discs
         .iter()
         .enumerate()
@@ -23,6 +24,7 @@ pub fn part2(discs: &[Disc]) -> usize {
     solve(&discs)
 }
 
+#[derive(Debug)]
 pub struct Disc {
     positions: usize,
     position: usize,
@@ -35,12 +37,12 @@ fn part1_1() {
 
 #[test]
 fn part1_actual() {
-    assert_eq!(solve(INPUT), 121834);
+    assert_eq!(part1(INPUT), 121834);
 }
 
 #[test]
 fn part2_actual() {
-    assert_eq!(solve(INPUT), 3208099);
+    assert_eq!(part2(INPUT), 3208099);
 }
 
 #[cfg(test)]

@@ -84,13 +84,13 @@ pub fn part2(s: &str) -> usize {
 }
 
 #[test]
-fn part1_1() {
-    assert_eq!(part1(INPUT), 121834);
+fn part1_actual() {
+    assert_eq!(part1(INPUT), 35186);
 }
 
 #[test]
-fn part2_1() {
-    assert_eq!(part2(INPUT), 3208099);
+fn part2_actual() {
+    assert_eq!(part2(INPUT), 22429);
 }
 
 pub const INPUT: &str = "jlmsuwbz";

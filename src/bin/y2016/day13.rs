@@ -181,7 +181,7 @@ pub fn part2(input: u32) -> u32 {
 
 #[test]
 fn part1_1() {
-    assert_eq!(part1(10), 11);
+    assert_eq!(Maze(10).distance(Point(1, 1), Point(7, 4)), 11);
 }
 
 #[test]

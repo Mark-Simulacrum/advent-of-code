@@ -1,4 +1,4 @@
-#![feature(test, swap_nonoverlapping, i128)]
+#![feature(test)]
 
 #[macro_use]
 extern crate failure;
@@ -29,6 +29,7 @@ pub trait VecLike<T: Default + Copy + Clone>: Clone + std::fmt::Debug {
     fn set(&mut self, i: usize, v: T);
     fn fill<I: Iterator<Item = T>>(&mut self, i: I);
     fn get(&self, i: usize) -> T;
+    fn set_len(&mut self, l: usize);
 }
 
 impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
@@ -57,6 +58,10 @@ impl<T: std::fmt::Debug + Copy + Clone + Default> VecLike<T> for Vec<T> {
 
     fn get(&self, i: usize) -> T {
         self.as_slice().get(i).cloned().unwrap_or_default()
+    }
+
+    fn set_len(&mut self, l: usize) {
+        self.truncate(l);
     }
 }
 

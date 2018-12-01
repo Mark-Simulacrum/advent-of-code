@@ -58,7 +58,7 @@ fn part1_1() {
 
 #[test]
 fn part2_1() {
-    assert_eq!(part2(INPUT), 120);
+    assert_eq!(part2(INPUT), 104);
 }
 
 pub static INPUT: &str = include_str!("day20.input");
