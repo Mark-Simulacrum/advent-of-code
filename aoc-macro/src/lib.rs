@@ -16,8 +16,17 @@ use syn::{parse_macro_input};
 #[proc_macro_attribute]
 pub fn generator(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as ItemFn);
+    let bench_generator_ident = Ident::new("bench_gen", input.span());
 
     let r = quote! {
+        pub fn #bench_generator_ident(name: &str, c: &mut criterion::Criterion) {
+            c.bench_function(
+                name,
+                |b| {
+                    b.iter(|| generator(INPUT));
+                }
+            );
+        }
         #input
     };
     r.into()
@@ -96,7 +105,8 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
             quote! {
                 pub fn #complete_ident() #r {
                     #example_ident();
-                    None
+                    let out = #fn_name(generator(INPUT));
+                    Some(out)
                 }
             }
         } else {
@@ -110,19 +120,9 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
             }
         };
 
-        let bench_generator_ident = Ident::new(&format!("{}_bench_gen", part), part.span());
         let bench_soln_ident = Ident::new(&format!("{}_bench_soln", part), part.span());
-        let bench_tot_ident = Ident::new(&format!("{}_bench_tot", part), part.span());
 
         let res = quote! {
-            pub fn #bench_generator_ident(name: &str, c: &mut criterion::Criterion) {
-                c.bench_function(
-                    name,
-                    |b| {
-                        b.iter(|| generator(INPUT));
-                    }
-                );
-            }
             pub fn #bench_soln_ident(name: &str, c: &mut criterion::Criterion) {
                 c.bench_function(
                     name,
@@ -132,14 +132,6 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
                             |data| {
                                 #fn_name(data);
                             });
-                    }
-                );
-            }
-            pub fn #bench_tot_ident(name: &str, c: &mut criterion::Criterion) {
-                c.bench_function(
-                    name,
-                    |b| {
-                        b.iter(|| #fn_name(generator(INPUT)));
                     }
                 );
             }
@@ -218,12 +210,9 @@ pub fn days(input: TokenStream) -> TokenStream {
     let bench_days = paths.clone().iter().map(|path| {
         let ident = path.segments.first().unwrap().value().ident.clone();
         quote! {
-            #ident::part1_bench_gen(&format!("{}::part1::generator", stringify!(#ident)), &mut c);
-            #ident::part1_bench_soln(&format!("{}::part1::solution", stringify!(#ident)), &mut c);
-            #ident::part1_bench_tot(&format!("{}::part1::total", stringify!(#ident)), &mut c);
-            #ident::part2_bench_gen(&format!("{}::part2::generator", stringify!(#ident)), &mut c);
-            #ident::part2_bench_soln(&format!("{}::part2::solution", stringify!(#ident)), &mut c);
-            #ident::part2_bench_tot(&format!("{}::part2::total", stringify!(#ident)), &mut c);
+            #ident::bench_gen(&format!("{}::generator", stringify!(#ident)), &mut c);
+            #ident::part1_bench_soln(&format!("{}::part1", stringify!(#ident)), &mut c);
+            #ident::part2_bench_soln(&format!("{}::part2", stringify!(#ident)), &mut c);
         }
     }).collect::<TokenStream2>();
 
