@@ -33,16 +33,15 @@ fn part2(input: impl Iterator<Item=i32>) -> i32 {
     for (i, xi) in running_total.iter().enumerate() {
         for (j, xj) in running_total.iter().enumerate() {
             if i == j { continue; }
+            let (i, j) = (cmp::min(i, j), cmp::max(i, j));
+            // We want the candidate with the lowest offset within the cycle,
+            // and we use j, not i, because j is the second index (and we dedup by the point
+            // where the sequence repeats, not where it started)
+            if candidate.map(|(_, candidate_j)| candidate_j < j).unwrap_or(false) {
+                continue;
+            }
             if (xi - xj).checked_rem(shift).map(|r| r == 0).unwrap_or(false) {
-                let (i, j) = (cmp::min(i, j), cmp::max(i, j));
-                // We want the candidate with the lowest offset within the cycle,
-                // and we use j, not i, because j is the second index (and we dedup by the point
-                // where the sequence repeats, not where it started)
-                if candidate.map(|(_, candidate_j)| candidate_j < j).unwrap_or(false) {
-                    continue;
-                }
-                let xi = running_total[i];
-                candidate = Some((xi, j));
+                candidate = Some((running_total[i], j));
             }
         }
     }
