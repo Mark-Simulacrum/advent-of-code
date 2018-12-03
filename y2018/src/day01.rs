@@ -1,4 +1,5 @@
 use aoc_macro::{generator, solution};
+use std::cmp;
 
 #[generator]
 fn generator(input: &str) -> impl Iterator<Item=i32> + '_ {
@@ -18,18 +19,35 @@ fn part1(input: impl Iterator<Item=i32>) -> i32 {
     example = 1,
     expect = 394)]
 fn part2(input: impl Iterator<Item=i32>) -> i32 {
-    let mut seen = fnv::FnvHashSet::default();
     let input = input.collect::<Vec<_>>();
 
-    let mut cur = 0;
-    loop {
-        for delta in &input {
-            if !seen.insert(cur) {
-                return cur;
+    let shift: i32 = input.iter().sum();
+
+    let mut running_total = Vec::with_capacity(input.len() + 1);
+    running_total.extend(input.iter().scan(0, |cur, item| {
+        *cur += item;
+        Some(*cur)
+    }));
+
+    let mut candidate = None;
+    for (i, xi) in running_total.iter().enumerate() {
+        for (j, xj) in running_total.iter().enumerate() {
+            if i == j { continue; }
+            if (xi - xj).checked_rem(shift).map(|r| r == 0).unwrap_or(false) {
+                let (i, j) = (cmp::min(i, j), cmp::max(i, j));
+                // We want the candidate with the lowest offset within the cycle,
+                // and we use j, not i, because j is the second index (and we dedup by the point
+                // where the sequence repeats, not where it started)
+                if candidate.map(|(_, candidate_j)| candidate_j < j).unwrap_or(false) {
+                    continue;
+                }
+                let xi = running_total[i];
+                candidate = Some((xi, j));
             }
-            cur += delta;
         }
     }
+
+    candidate.unwrap().0
 }
 
 static INPUT: &str = "
