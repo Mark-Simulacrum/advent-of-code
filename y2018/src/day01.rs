@@ -38,25 +38,32 @@ fn part2(input: impl Iterator<Item=i32>) -> i32 {
 
     let shift: i32 = input.iter().sum();
 
-    let mut running_total = Vec::with_capacity(input.len() + 1);
-    running_total.extend(input.iter().scan(0, |cur, item| {
-        *cur += item;
-        Some((*cur, ((*cur % shift) + shift) % shift))
-    }).enumerate().map(|(idx, (value, modulo))| {
-        RunningTotal {
-            idx, value, modulo,
-        }
-    }));
+    let mut cur = 0;
+    let mut running_total = Vec::with_capacity(input.len());
+    // There cannot be more than shift moduli
+    let mut by_modulo = fnv::FnvHashMap::with_capacity_and_hasher(
+        shift.abs() as usize,
+        Default::default()
+    );
+    for (idx, item) in input.iter().enumerate() {
+        cur += item;
+        let entry = RunningTotal {
+            idx,
+            value: cur,
+            // this is the actual modulus function
+            modulo: ((cur % shift) + shift) % shift,
+        };
 
-    // Group running totals by modulus.
-    //
-    // Elements with the same modulus will eventually intersect in value (i.e., a future version of
-    // some row will equal a current/future version of another (or the same, in theory) row.
-    let mut by_modulo = fnv::FnvHashMap::default();
-    for e in &running_total {
-        by_modulo.entry(e.modulo)
+        // Group running totals by modulus.
+        //
+        // Elements with the same modulus will eventually intersect in value
+        // (i.e., a future version of some row will equal a current/future
+        // version of another (or the same, in theory) row.
+        by_modulo
+            .entry(entry.modulo)
             .or_insert_with(Vec::new)
-            .push(e);
+            .push(entry);
+        running_total.push(entry);
     }
 
     let mut candidate = None::<Candidate>;
