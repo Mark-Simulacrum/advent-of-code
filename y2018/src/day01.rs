@@ -1,16 +1,16 @@
 use aoc_macro::{generator, solution};
 
 #[generator]
-fn generator(input: &str) -> impl Iterator<Item=i32> + '_ {
-    input.trim().lines().map(|l| l.parse::<i32>().unwrap())
+fn generator(input: &str) -> Vec<i32> {
+    input.trim().lines().map(|l| l.parse::<i32>().unwrap()).collect()
 }
 
 #[solution(part1,
-    example_input = [1, 1, 1].iter().cloned(),
+    example_input = vec![1, 1, 1],
     example = 3,
     expect = 520)]
-fn part1(input: impl Iterator<Item=i32>) -> i32 {
-    input.sum()
+fn part1(input: Vec<i32>) -> i32 {
+    input.into_iter().sum()
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -30,12 +30,10 @@ struct Candidate {
 }
 
 #[solution(part2,
-    example_input = [3, 3, 4, -2, -4].iter().cloned(),
+    example_input = vec![3, 3, 4, -2, -4],
     example = 10,
     expect = 394)]
-fn part2(input: impl Iterator<Item=i32>) -> i32 {
-    let input = input.collect::<Vec<_>>();
-
+fn part2(input: Vec<i32>) -> i32 {
     let shift: i32 = input.iter().sum();
 
     let mut cur = 0;
