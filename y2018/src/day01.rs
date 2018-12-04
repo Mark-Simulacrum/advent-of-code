@@ -14,6 +14,12 @@ fn part1(input: impl Iterator<Item=i32>) -> i32 {
     input.sum()
 }
 
+struct RunningTotal {
+    idx: usize,
+    value: i32,
+    modulo: i32,
+}
+
 #[solution(part2,
     example_input = "+1\n+1\n-1\n-2",
     example = 1,
@@ -26,27 +32,33 @@ fn part2(input: impl Iterator<Item=i32>) -> i32 {
     let mut running_total = Vec::with_capacity(input.len() + 1);
     running_total.extend(input.iter().scan(0, |cur, item| {
         *cur += item;
-        Some(*cur)
+        Some((*cur, ((*cur % shift) + shift) % shift))
+    }).enumerate().map(|(idx, (value, modulo))| {
+        RunningTotal {
+            idx, value, modulo,
+        }
     }));
 
     let mut candidate = None;
-    for (i, xi) in running_total.iter().enumerate() {
-        for (j, xj) in running_total.iter().enumerate() {
-            if i == j { continue; }
-            let (i, j) = (cmp::min(i, j), cmp::max(i, j));
+    for a in running_total.iter() {
+        for b in running_total.iter() {
+            if a.idx == b.idx { continue; }
+            let (i, j) = (cmp::min(a.idx, b.idx), cmp::max(a.idx, b.idx));
             // We want the candidate with the lowest offset within the cycle,
             // and we use j, not i, because j is the second index (and we dedup by the point
             // where the sequence repeats, not where it started)
             if candidate.map(|(_, candidate_j)| candidate_j < j).unwrap_or(false) {
                 continue;
             }
-            if (xi - xj).checked_rem(shift).map(|r| r == 0).unwrap_or(false) {
-                candidate = Some((running_total[i], j));
+            // This is the same as checking if (a.value - b.value) mod shift == 0;
+            // which is the condition under which the cycle repeats.
+            if a.modulo == b.modulo {
+                candidate = Some((i, j));
             }
         }
     }
 
-    candidate.unwrap().0
+    running_total[candidate.unwrap().0].value
 }
 
 static INPUT: &str = "
