@@ -7,7 +7,7 @@ fn generator(input: &str) -> impl Iterator<Item=i32> + '_ {
 }
 
 #[solution(part1,
-    example_input = "+1\n+1\n+1",
+    example_input = [1, 1, 1].iter().cloned(),
     example = 3,
     expect = 520)]
 fn part1(input: impl Iterator<Item=i32>) -> i32 {
@@ -21,8 +21,8 @@ struct RunningTotal {
 }
 
 #[solution(part2,
-    example_input = "+1\n+1\n-1\n-2",
-    example = 1,
+    example_input = [3, 3, 4, -2, -4].iter().cloned(),
+    example = 10,
     expect = 394)]
 fn part2(input: impl Iterator<Item=i32>) -> i32 {
     let input = input.collect::<Vec<_>>();

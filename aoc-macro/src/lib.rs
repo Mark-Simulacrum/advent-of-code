@@ -93,7 +93,7 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
 
         let example_func = quote! {
             fn #example_ident() {
-                let out = #fn_name(generator(#example_input));
+                let out = #fn_name(#example_input);
                 assert_eq!(out, #example);
             }
         };
