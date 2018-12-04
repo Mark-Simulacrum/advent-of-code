@@ -1,5 +1,4 @@
 use aoc_macro::{generator, solution};
-use std::cmp;
 
 #[generator]
 fn generator(input: &str) -> impl Iterator<Item=i32> + '_ {
@@ -14,10 +13,20 @@ fn part1(input: impl Iterator<Item=i32>) -> i32 {
     input.sum()
 }
 
+#[derive(Debug, Copy, Clone)]
 struct RunningTotal {
     idx: usize,
     value: i32,
     modulo: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
+struct Candidate {
+    /// How many cycles before this candidate is seen, times `shift`.
+    // NB: The period is not stored directly because division is slow.
+    delta: usize,
+    final_idx: usize,
+    value: i32,
 }
 
 #[solution(part2,
@@ -39,26 +48,47 @@ fn part2(input: impl Iterator<Item=i32>) -> i32 {
         }
     }));
 
-    let mut candidate = None;
+    let mut candidate = None::<Candidate>;
     for a in running_total.iter() {
         for b in running_total.iter() {
             if a.idx == b.idx { continue; }
-            let (i, j) = (cmp::min(a.idx, b.idx), cmp::max(a.idx, b.idx));
-            // We want the candidate with the lowest offset within the cycle,
-            // and we use j, not i, because j is the second index (and we dedup by the point
-            // where the sequence repeats, not where it started)
-            if candidate.map(|(_, candidate_j)| candidate_j < j).unwrap_or(false) {
-                continue;
-            }
             // This is the same as checking if (a.value - b.value) mod shift == 0;
-            // which is the condition under which the cycle repeats.
+            // which is the condition under which one of these rows will eventually equal some past
+            // version of the other.
             if a.modulo == b.modulo {
-                candidate = Some((i, j));
+                let delta = a.value - b.value;
+
+                // We want the shift and the delta to have the same sign:
+                // that means that as we increase from cycle to cycle, we'll
+                // eventually go to j's future value.
+                let (i, j) = if shift.signum() == delta.signum() {
+                    (a.idx, b.idx)
+                } else {
+                    (b.idx, a.idx)
+                };
+
+                // We want the lowest period -- the sooner the value repeats, the better.
+                // However, division is slow, so just consider the delta -- we're dividing by the
+                // same shift in all cases anyway.
+                if candidate.map(|c| c.delta < delta.abs() as usize).unwrap_or(false) {
+                    continue;
+                }
+                // We want the candidate with the lowest offset within the cycle,
+                // and we use j, not i, because j is the second index (and we dedup by the point
+                // where the sequence repeats, not where it started)
+                if candidate.map(|c| c.final_idx < j).unwrap_or(false) {
+                    continue;
+                }
+                candidate = Some(Candidate {
+                    final_idx: j,
+                    delta: delta.abs() as usize,
+                    value: running_total[i].value,
+                });
             }
         }
     }
 
-    running_total[candidate.unwrap().0].value
+    candidate.expect("candidate exists").value
 }
 
 static INPUT: &str = "
