@@ -48,43 +48,49 @@ fn part2(input: impl Iterator<Item=i32>) -> i32 {
         }
     }));
 
+    // Group running totals by modulus.
+    //
+    // Elements with the same modulus will eventually intersect in value (i.e., a future version of
+    // some row will equal a current/future version of another (or the same, in theory) row.
+    let mut by_modulo = fnv::FnvHashMap::default();
+    for e in &running_total {
+        by_modulo.entry(e.modulo)
+            .or_insert_with(Vec::new)
+            .push(e);
+    }
+
     let mut candidate = None::<Candidate>;
     for a in running_total.iter() {
-        for b in running_total.iter() {
+        for b in by_modulo[&a.modulo].iter() {
             if a.idx == b.idx { continue; }
-            // This is the same as checking if (a.value - b.value) mod shift == 0;
-            // which is the condition under which one of these rows will eventually equal some past
-            // version of the other.
-            if a.modulo == b.modulo {
-                let delta = a.value - b.value;
+            let delta = a.value - b.value;
 
-                // We want the shift and the delta to have the same sign:
-                // that means that as we increase from cycle to cycle, we'll
-                // eventually go to j's future value.
-                let (i, j) = if shift.signum() == delta.signum() {
-                    (a.idx, b.idx)
-                } else {
-                    (b.idx, a.idx)
-                };
+            // We want the shift and the delta to have the same sign:
+            // that means that as we increase from cycle to cycle, we'll
+            // eventually go to j's future value.
+            let (i, j) = if shift.signum() == delta.signum() {
+                (a.idx, b.idx)
+            } else {
+                (b.idx, a.idx)
+            };
 
-                // We want the lowest period -- the sooner the value repeats, the better.
-                // However, division is slow, so just consider the delta -- we're dividing by the
-                // same shift in all cases anyway.
-                if candidate.map(|c| c.delta < delta.abs() as usize).unwrap_or(false) {
-                    continue;
-                }
-                // We want the candidate with the lowest offset within the cycle,
-                // and we use j, not i, because j is the second index (and we dedup by the point
-                // where the sequence repeats, not where it started)
-                if candidate.map(|c| c.final_idx < j).unwrap_or(false) {
-                    continue;
-                }
-                candidate = Some(Candidate {
-                    final_idx: j,
-                    delta: delta.abs() as usize,
-                    value: running_total[i].value,
-                });
+            // We want the lowest period -- the sooner the value repeats, the better.
+            // However, division is slow, so just consider the delta -- we're dividing by the
+            // same shift in all cases anyway.
+            if candidate.map(|c| c.delta < delta.abs() as usize).unwrap_or(false) {
+                continue;
             }
+            // We want the candidate with the lowest offset within the cycle,
+            // and we use j, not i, because j is the second index (and we dedup by the point
+            // where the sequence repeats, not where it started)
+            if candidate.map(|c| c.final_idx < j).unwrap_or(false) {
+                continue;
+            }
+            candidate = Some(Candidate {
+                final_idx: j,
+                delta: delta.abs() as usize,
+                value: running_total[i].value,
+            });
         }
     }
 
