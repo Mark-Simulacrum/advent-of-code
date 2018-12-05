@@ -43,7 +43,6 @@ fn generator(input: &str) -> Vec<Claim> {
 fn part1(input: Vec<Claim>) -> usize {
     let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() + 1;
     let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() + 1;
-
     let mut zone = vec![vec![0; area_width as usize]; area_height as usize];
 
     for claim in &input {
@@ -65,24 +64,30 @@ fn part1(input: Vec<Claim>) -> usize {
     example = 3,
     expect = 742)]
 fn part2(input: Vec<Claim>) -> u16 {
-    let mut zone = fnv::FnvHashMap::default();
+    let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() + 1;
+    let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() + 1;
+    let mut zone = vec![vec![None; area_width as usize]; area_height as usize];
+
+    let mut overlaps = fnv::FnvHashSet::default();
     for claim in &input {
         for col in claim.left..=(claim.left + claim.width) {
             for row in claim.top..=(claim.top + claim.height) {
-                zone.entry((row, col)).or_insert_with(Vec::new).push(claim.id);
+                if let Some(id) = zone[row as usize][col as usize] {
+                    overlaps.insert(claim.id);
+                    overlaps.insert(id);
+                } else {
+                    zone[row as usize][col as usize] = Some(claim.id);
+                }
             }
         }
     }
 
-    let mut overlaps = fnv::FnvHashSet::default();
-
-    for ids in zone.values() {
-        if ids.len() >= 2 {
-            overlaps.extend(ids.iter().cloned());
+    for claim in &input {
+        if !overlaps.contains(&claim.id) {
+            return claim.id;
         }
     }
-
-    zone.values().find(|v| v.len() == 1 && !overlaps.contains(&v[0])).unwrap()[0]
+    unreachable!()
 }
 
 static INPUT: &str = "
