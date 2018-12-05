@@ -1,9 +1,11 @@
 use aoc_macro::{generator, solution};
+use bitvec::{LittleEndian, BitVec};
 use regex::Regex;
+use std::num::NonZeroU16;
 
 #[derive(Copy, Clone, Debug)]
 struct Claim {
-    id: u16,
+    id: NonZeroU16,
     left: u16,
     top: u16,
     width: u16,
@@ -16,7 +18,7 @@ fn generator(input: &str) -> Vec<Claim> {
     input.trim().lines().map(|line| {
         let c = r.captures(&line).unwrap();
         Claim {
-            id: c[1].parse().unwrap(),
+            id: NonZeroU16::new(c[1].parse().unwrap()).unwrap(),
             left: c[2].parse().unwrap(),
             top: c[3].parse().unwrap(),
             width: c[4].parse().unwrap(),
@@ -41,19 +43,19 @@ fn generator(input: &str) -> Vec<Claim> {
     example = 4,
     expect = 113716)]
 fn part1(input: Vec<Claim>) -> usize {
-    let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() + 1;
-    let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() + 1;
-    let mut zone = vec![vec![0; area_width as usize]; area_height as usize];
+    let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() as usize + 1;
+    let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() as usize + 1;
+    let mut zone = vec![0; area_width * area_height];
 
     for claim in &input {
-        for col in claim.left..=(claim.left + claim.width) {
-            for row in claim.top..=(claim.top + claim.height) {
-                zone[row as usize][col as usize] += 1;
+        for row in claim.top..=(claim.top + claim.height) {
+            for col in claim.left..=(claim.left + claim.width) {
+                zone[(row as usize * area_width) + col as usize] += 1;
             }
         }
     }
 
-    zone.iter().flat_map(|r| r).filter(|c| **c >= 2).count()
+    zone.iter().filter(|c| **c >= 2).count()
 }
 
 #[solution(part2,
@@ -64,30 +66,29 @@ fn part1(input: Vec<Claim>) -> usize {
     example = 3,
     expect = 742)]
 fn part2(input: Vec<Claim>) -> u16 {
-    let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() + 1;
-    let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() + 1;
-    let mut zone = vec![vec![None; area_width as usize]; area_height as usize];
+    let area_width = input.iter().map(|c| c.left + c.width).max().unwrap() as usize + 1;
+    let area_height = input.iter().map(|c| c.top + c.height).max().unwrap() as usize + 1;
+    let mut zone = vec![None::<NonZeroU16>; area_width * area_height];
 
-    let mut overlaps = fnv::FnvHashSet::default();
+    let mut ids = BitVec::<LittleEndian>::with_capacity(input.len() + 1);
+    ids.push(false); // there's no 0 id but we push it anyway
+    for _ in 1..=input.len() {
+        ids.push(true);
+    }
     for claim in &input {
         for col in claim.left..=(claim.left + claim.width) {
             for row in claim.top..=(claim.top + claim.height) {
-                if let Some(id) = zone[row as usize][col as usize] {
-                    overlaps.insert(claim.id);
-                    overlaps.insert(id);
+                if let Some(id) = zone[(row as usize * area_width) + col as usize] {
+                    ids.set(claim.id.get() as usize, false);
+                    ids.set(id.get() as usize, false);
                 } else {
-                    zone[row as usize][col as usize] = Some(claim.id);
+                    zone[(row as usize * area_width) + col as usize] = Some(claim.id);
                 }
             }
         }
     }
 
-    for claim in &input {
-        if !overlaps.contains(&claim.id) {
-            return claim.id;
-        }
-    }
-    unreachable!()
+    ids.into_iter().enumerate().find(|(_, val)| *val).unwrap().0 as u16
 }
 
 static INPUT: &str = "
