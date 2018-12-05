@@ -7,4 +7,5 @@ edition = "2018"
 [dependencies]
 aoc-macro = { path = "../aoc-macro" }
 criterion = "0.2"
+regex = "1"
 fnv = "1"
