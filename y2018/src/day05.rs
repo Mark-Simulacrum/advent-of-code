@@ -8,32 +8,32 @@ fn generator(input: &str) -> &str {
 fn react(mut input: String) -> String {
     let mut made_progress = true;
     while made_progress {
-        let bytes = input.as_bytes();
-        let mut next = String::with_capacity(bytes.len());
-        let mut idx = 0;
-        while idx + 1 < bytes.len() {
-            let a = bytes[idx] as char;
-            let b = bytes[idx + 1] as char;
-            let a_upper = a.is_ascii_uppercase();
-            let b_upper = b.is_ascii_uppercase();
-            if a_upper && !b_upper && a.to_ascii_lowercase() == b {
-                idx += 2;
-                continue;
-            }
-            if b_upper && !a_upper && b.to_ascii_lowercase() == a {
-                idx += 2;
-                continue;
-            }
-            next.push(a);
-            idx += 1;
+        let start = input.len();
+        if input.len() < 2 {
+            return input;
         }
-        // any trailing characters should be pushed on
-        while idx < bytes.len() {
-            next.push(bytes[idx] as char);
-            idx += 1;
+
+        let mut idx = input.len() - 1;
+        while idx >= 1 {
+            let a = input.as_bytes()[idx] as char;
+            let b = input.as_bytes()[idx - 1] as char;
+            if a.eq_ignore_ascii_case(&b) {
+                let a_upper = a.is_ascii_uppercase();
+                let b_upper = b.is_ascii_uppercase();
+                if a_upper ^ b_upper {
+                    input.drain((idx - 1)..=idx);
+                    if idx == 1 {
+                        break;
+                    } else {
+                        idx -= 2;
+                        continue;
+                    }
+                }
+            }
+            idx -= 1;
         }
-        made_progress = next.len() != input.len();
-        input = next;
+
+        made_progress = start != input.len();
     }
     input
 }
