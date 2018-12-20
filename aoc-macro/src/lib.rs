@@ -80,6 +80,19 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as ItemFn);
     let fn_name = input.ident.clone();
     let ret = input.decl.output.clone();
+    let args = input.decl.inputs.len();
+
+    let example_arg = if args == 2 {
+        quote!(true)
+    } else {
+        quote!()
+    };
+
+    let normal_arg = if args == 2 {
+        quote!(false)
+    } else {
+        quote!()
+    };
 
     let SolutionParams {
         part,
@@ -93,7 +106,7 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
 
         let example_func = quote! {
             fn #example_ident() {
-                let out = #fn_name(#example_input);
+                let out = #fn_name(#example_input, #example_arg);
                 assert_eq!(out, #example);
             }
         };
@@ -105,7 +118,7 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
             quote! {
                 pub fn #complete_ident() #r {
                     #example_ident();
-                    let out = #fn_name(generator(INPUT));
+                    let out = #fn_name(generator(INPUT), #normal_arg);
                     Some(out)
                 }
             }
@@ -113,7 +126,7 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
             quote! {
                 pub fn #complete_ident() #r {
                     #example_ident();
-                    let out = #fn_name(generator(INPUT));
+                    let out = #fn_name(generator(INPUT), #normal_arg);
                     assert_eq!(out, #expected);
                     Some(out)
                 }
@@ -130,7 +143,7 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
                         b.iter_with_large_setup(
                             || generator(INPUT),
                             |data| {
-                                #fn_name(data);
+                                #fn_name(data, #normal_arg);
                             });
                     }
                 );
