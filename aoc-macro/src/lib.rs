@@ -13,6 +13,41 @@ use syn::spanned::Spanned;
 use syn::{ItemFn};
 use syn::{parse_macro_input};
 
+#[derive(Debug)]
+struct TestParams {
+    name: Ident,
+    expr: Expr,
+    expect: Expr,
+}
+
+impl Parse for TestParams {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let name = input.parse()?;
+        input.parse::<Token![:]>()?;
+        let expr = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let expect = input.parse()?;
+        Ok(TestParams {
+            name,
+            expr,
+            expect,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn sol_test(input: TokenStream) -> TokenStream {
+    let TestParams {
+        name, expr, expect,
+    } = parse_macro_input!(input as TestParams);
+    (quote! {
+        #[test]
+        fn #name() {
+            assert_eq!(#expr, #expect);
+        }
+    }).into()
+}
+
 #[proc_macro_attribute]
 pub fn generator(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as ItemFn);
