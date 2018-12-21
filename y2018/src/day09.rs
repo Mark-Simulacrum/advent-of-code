@@ -1,10 +1,91 @@
-use aoc_macro::{generator, solution};
+use aoc_macro::{generator, solution, sol_test};
+use std::fmt;
+use generational_arena::{Arena, Index};
 
 type Out<'a> = (u32, u32);
 
 #[generator]
-fn generator(input: &str) -> Out {
-    ()
+fn generator(input: Out) -> Out {
+    input
+}
+
+struct Node {
+    value: u32,
+    prev: Index,
+    next: Index,
+}
+
+struct Circle {
+    arena: Arena<Node>,
+    zero: Index,
+    cursor: Index,
+}
+
+impl Circle {
+    fn with_capacity(cap: usize) -> Circle {
+        // This is our work-around for creating a node with indices that point to itself
+        let mut fake = Arena::new();
+        let fake = fake.insert(());
+
+        let mut a = Arena::with_capacity(cap);
+        let cursor = a.insert(Node { value: 0, prev: fake, next: fake });
+        a[cursor].prev = cursor;
+        a[cursor].next = cursor;
+        Circle {
+            arena: a,
+            zero: cursor,
+            cursor,
+        }
+    }
+
+    fn forward(&mut self, n: usize) {
+        for _ in 0..n {
+            self.cursor = self.arena[self.cursor].next;
+        }
+    }
+
+    fn backward(&mut self, n: usize) {
+        for _ in 0..n {
+            self.cursor = self.arena[self.cursor].prev;
+        }
+    }
+
+    fn remove(&mut self) -> u32 {
+        let node = self.arena.remove(self.cursor).expect("node to exist");
+        self.arena[node.prev].next = node.next;
+        self.arena[node.next].prev = node.prev;
+        self.cursor = node.next;
+        assert!(self.arena.contains(self.cursor));
+        node.value
+    }
+
+    fn insert(&mut self, v: u32) {
+        let prev = self.arena[self.cursor].prev;
+        let next = self.cursor;
+        let node = self.arena.insert(Node {
+            value: v,
+            prev,
+            next,
+        });
+        self.arena[prev].next = node;
+        self.arena[next].prev = node;
+        self.cursor = node;
+    }
+}
+
+impl fmt::Debug for Circle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut cur = self.zero;
+        loop {
+            let node = &self.arena[cur];
+            write!(f, "{} ", node.value)?;
+            cur = node.next;
+            if cur == self.zero {
+                break;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[solution(part1,
@@ -13,34 +94,23 @@ fn generator(input: &str) -> Out {
     expect = 428690)]
 fn part1((players, marbles): Out) -> u32 {
     let mut elfs: Vec<u32> = vec![0; players as usize];
-    let mut circle: Vec<u32> = vec![0];
-    let mut cur: usize = 0;
+    let mut circle = Circle::with_capacity(marbles as usize);
     let mut next_marble: u32 = 1;
     'outer: loop {
         for elf in &mut elfs {
             if next_marble % 23 == 0 {
                 *elf += next_marble;
-                let at = if cur >= 7 {
-                    cur - 7
-                } else {
-                    circle.len() - (7 - cur)
-                };
-                let marble = circle.remove(at);
+                circle.backward(7);
+                let marble = circle.remove();
                 *elf += marble;
-                cur = at;
             } else {
-                let at = (cur + 2) % circle.len();
-                circle.insert(at, next_marble);
-                cur = at;
+                circle.forward(2);
+                circle.insert(next_marble);
             }
             next_marble += 1;
 
             if next_marble > marbles {
                 break 'outer;
-            }
-            if next_marble % 100_000 == 0 {
-                eprintln!("{:?} / {:?}: {:.2}",
-                    next_marble, marbles, (next_marble as f64 / marbles as f64));
             }
         }
     }
