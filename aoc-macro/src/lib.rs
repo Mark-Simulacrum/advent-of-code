@@ -220,7 +220,7 @@ pub fn days(input: TokenStream) -> TokenStream {
                             if arg2.contains("part1") || arg2.contains("both") {
                                 match #path::part1_complete() {
                                     Some(x) => {
-                                        eprintln!("Day {} Part 1: {}", #day_n, x);
+                                        eprintln!("Day {} Part 1: {:?}", #day_n, x);
                                     }
                                     None => {
                                         eprintln!("Day {} Part 1: Not yet implemented", #day_n);
@@ -230,7 +230,7 @@ pub fn days(input: TokenStream) -> TokenStream {
                             if arg2.contains("part2") || arg2.contains("both") {
                                 match #path::part2_complete() {
                                     Some(x) => {
-                                        eprintln!("Day {} Part 2: {}", #day_n, x);
+                                        eprintln!("Day {} Part 2: {:?}", #day_n, x);
                                     }
                                     None => {
                                         eprintln!("Day {} Part 2: Not yet implemented", #day_n);
