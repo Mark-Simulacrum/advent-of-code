@@ -8,13 +8,19 @@ fn generator((input, patterns): (&'static str, &'static str)) -> Out {
     let patterns = patterns.trim().lines().map(|line| {
         let mut s = line.split(" => ");
         let pattern = s.next().unwrap().as_bytes();
-        let pattern = Window::from_bools(&[
+        let p = [
             pattern[0] == b'#',
             pattern[1] == b'#',
             pattern[2] == b'#',
             pattern[3] == b'#',
             pattern[4] == b'#',
-        ]);
+        ];
+        let pattern =
+            ((p[0] as u8) << 4) |
+            ((p[1] as u8) << 3) |
+            ((p[2] as u8) << 2) |
+            ((p[3] as u8) << 1) |
+            ((p[4] as u8) << 0);
         let out = s.next().unwrap().as_bytes()[0] == b'#';
         (pattern, out)
     }).collect::<Vec<_>>();
@@ -78,34 +84,30 @@ mod set {
             self.0.insert(v);
         }
 
-        pub fn remove(&mut self, v: isize) {
-            self.0.remove(&v);
-        }
-
         pub fn get(&self, v: isize) -> bool {
             self.0.contains(&v)
         }
 
-        pub fn iter<'a>(&'a self) -> impl Iterator<Item=(isize, Window)> + 'a {
+        pub fn iter<'a>(&'a self) -> impl Iterator<Item=Window> + 'a {
             self.0.iter().flat_map(move |start| {
                 let start = *start;
                 let b = [
                     self.get(start - 4), // a
                     self.get(start - 3), // ab
-                    self.get(start - 2), // abc
-                    self.get(start - 1), // abcd
-                    self.get(start),     // abcde
-                    self.get(start + 1), //  bcde
-                    self.get(start + 2), //   cde
+                    self.get(start - 2), // abc   *
+                    self.get(start - 1), // abcd  *
+                    self.get(start),     // abcde *
+                    self.get(start + 1), //  bcde *
+                    self.get(start + 2), //   cde *
                     self.get(start + 3), //    de
                     self.get(start + 4), //     e
                 ];
 
-                once((start - 2, Window::from_bools(&b[0..5])))
-                    .chain(once((start - 1, Window::from_bools(&b[1..6]))))
-                    .chain(once((start - 0, Window::from_bools(&b[2..7]))))
-                    .chain(once((start + 1, Window::from_bools(&b[3..8]))))
-                    .chain(once((start + 2, Window::from_bools(&b[4..9]))))
+                once(Window::new(start - 2, &b[0..5]))
+                    .chain(once(Window::new(start - 1, &b[1..6])))
+                    .chain(once(Window::new(start - 0, &b[2..7])))
+                    .chain(once(Window::new(start + 1, &b[3..8])))
+                    .chain(once(Window::new(start + 2, &b[4..9])))
             })
         }
 
@@ -126,37 +128,42 @@ mod set {
 use self::set::Set;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-struct Window(u8);
+struct Window {
+    center: isize,
+    range: u8,
+}
 
 impl Window {
-    fn from_bools(v: &[bool]) -> Self {
-        Window(
+    fn new(center: isize, v: &[bool]) -> Self {
+        Window {
+            center,
+            range:
             ((v[0] as u8) << 4) |
             ((v[1] as u8) << 3) |
             ((v[2] as u8) << 2) |
             ((v[3] as u8) << 1) |
             ((v[4] as u8) << 0)
-        )
+        }
     }
 
     fn to_usize(self) -> usize {
-        self.0 as usize
+        self.range as usize
     }
 }
 
 struct Patterns {
-    map: Vec<Option<bool>>,
+    map: Vec<bool>,
 }
 
 impl Patterns {
-    fn new(v: Vec<(Window, bool)>) -> Self {
+    fn new(v: Vec<(u8, bool)>) -> Self {
         let map = v.iter().cloned().collect::<fnv::FnvHashMap<_, _>>();
         let mut vec_map = Vec::new();
         for idx in 0..=0b11111 { // max window
-            if let Some(b) = map.get(&Window(idx)) {
-                vec_map.push(Some(*b));
-            } else {
-                vec_map.push(None);
+            match map.get(&idx) {
+                Some(true) => vec_map.push(true),
+                Some(false) => vec_map.push(false),
+                None => vec_map.push(false),
             }
         }
         Patterns {
@@ -182,11 +189,10 @@ impl Cycler {
 
     fn cycle(&mut self) {
         self.next.clear();
-        for (position, window) in self.current.iter() {
+        for window in self.current.iter() {
             match self.patterns.map[window.to_usize()] {
-                Some(true) => self.next.insert(position),
-                Some(false) => self.next.remove(position),
-                None => {}
+                true => self.next.insert(window.center),
+                false => {}
             }
         }
         std::mem::swap(&mut self.current, &mut self.next)
