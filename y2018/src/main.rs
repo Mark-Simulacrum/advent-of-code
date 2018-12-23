@@ -1,4 +1,5 @@
 #![feature(try_blocks)]
+#![feature(vec_remove_item)]
 use aoc_macro::days;
 
 days! {
