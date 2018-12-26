@@ -226,7 +226,7 @@ fn part1((input, patterns): Out) -> isize {
 
 #[solution(part2,
     example_input = generator(EXAMPLE),
-    example = 0,
+    example = 999999999374,
     expect = 1900000000384)]
 fn part2(input: Out) -> isize {
     iterate(input, 50000000000)
