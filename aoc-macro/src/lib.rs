@@ -1,4 +1,4 @@
-#![recursion_limit = "128"]
+#![recursion_limit = "256"]
 #![feature(try_blocks, proc_macro_diagnostic)]
 
 extern crate proc_macro;
@@ -193,6 +193,59 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
         part.span().unstable().error("Only `part1`/`part2` supported").emit();
         TokenStream::new()
     }
+}
+
+#[proc_macro]
+pub fn day(_: TokenStream) -> TokenStream {
+    let res = quote! {
+        fn main() {
+            let f = file!();
+            let day = f.find("/day").unwrap();
+            let day = f[day + 4..day + 6].parse::<usize>().unwrap();
+            let arg = std::env::args().nth(1);
+            match arg.as_ref().map(|s| s.as_str()) {
+                Some("run") => {
+                    let mut args = std::env::args().collect::<Vec<_>>();
+                    // if only run is passed, then run both
+                    if args.len() == 2 {
+                        args.push("both".into());
+                    }
+                    for arg in args {
+                        if arg.contains("part1") || arg.contains("both") {
+                            match part1_complete() {
+                                Some(x) => {
+                                    eprintln!("Day {} Part 1: {:?}", day, x);
+                                }
+                                None => {
+                                    eprintln!("Day {} Part 1: Not yet implemented", day);
+                                }
+                            }
+                        }
+                        if arg.contains("part2") || arg.contains("both") {
+                            match part2_complete() {
+                                Some(x) => {
+                                    eprintln!("Day {} Part 2: {:?}", day, x);
+                                }
+                                None => {
+                                    eprintln!("Day {} Part 2: Not yet implemented", day);
+                                }
+                            }
+                        }
+                    }
+                }
+                Some(_) | None => {
+                    criterion::init_logging();
+                    let mut c = criterion::Criterion::default()
+                        .configure_from_args();
+                    bench_gen(&format!("day{}::generator", day), &mut c);
+                    part1_bench_soln(&format!("day{}::part1", day), &mut c);
+                    part2_bench_soln(&format!("day{}::part2", day), &mut c);
+                }
+            }
+        }
+    };
+
+    TokenStream::from(res)
 }
 
 #[proc_macro]

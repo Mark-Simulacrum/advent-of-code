@@ -8,6 +8,8 @@ use std::fmt::{self, Write};
 use petgraph::visit::Bfs;
 use petgraph::algo::astar;
 
+aoc_macro::day!();
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Position {
     y: usize,

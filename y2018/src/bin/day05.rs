@@ -1,5 +1,7 @@
 use aoc_macro::{generator, solution};
 
+aoc_macro::day!();
+
 #[generator]
 fn generator(input: &str) -> &str {
     input.trim()

@@ -1,5 +1,7 @@
 use aoc_macro::{generator, solution};
 
+aoc_macro::day!();
+
 #[generator]
 fn generator(input: &str) -> Vec<i32> {
     input.trim().lines().map(|l| l.parse::<i32>().unwrap()).collect()

@@ -1,5 +1,7 @@
 use aoc_macro::{generator, solution};
 
+aoc_macro::day!();
+
 type Out<'a> = Vec<u8>;
 
 #[generator]

@@ -1,6 +1,8 @@
 use aoc_macro::{generator, solution};
 use std::fmt;
 
+aoc_macro::day!();
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 struct Coordinate {
     x: isize,

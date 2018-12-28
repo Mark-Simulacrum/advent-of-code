@@ -1,6 +1,8 @@
 use aoc_macro::{generator, solution};
 use regex::Regex;
 
+aoc_macro::day!();
+
 #[derive(Debug, Copy, Clone)]
 enum Event {
     Wake,

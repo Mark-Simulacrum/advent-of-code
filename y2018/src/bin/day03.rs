@@ -3,6 +3,8 @@ use bitvec::{LittleEndian, BitVec};
 use regex::Regex;
 use std::num::NonZeroU16;
 
+aoc_macro::day!();
+
 #[derive(Copy, Clone, Debug)]
 struct Claim {
     id: NonZeroU16,

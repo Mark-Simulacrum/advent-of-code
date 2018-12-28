@@ -1,5 +1,8 @@
+#![feature(try_from)]
 use aoc_macro::{generator, solution, sol_test};
 use std::convert::TryInto;
+
+aoc_macro::day!();
 
 #[generator]
 fn generator<T>(input: T) -> T {

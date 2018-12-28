@@ -2,6 +2,8 @@ use aoc_macro::{generator, solution, sol_test};
 use std::fmt;
 use generational_arena::{Arena, Index};
 
+aoc_macro::day!();
+
 type Out<'a> = (u32, u32);
 
 #[generator]

@@ -4,6 +4,8 @@ use fnv::FnvHashSet as HashSet;
 use std::collections::BTreeMap;
 use std::ops;
 
+aoc_macro::day!();
+
 type Out = State;
 
 #[derive(Copy, Clone, Debug)]

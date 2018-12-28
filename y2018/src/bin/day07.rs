@@ -5,6 +5,8 @@ use petgraph::stable_graph::StableGraph;
 use fnv::FnvHashMap;
 use petgraph::visit::IntoNodeReferences;
 
+aoc_macro::day!();
+
 type Out = StableGraph<char, ()>;
 
 fn externals<'a>(g: &'a Out) -> impl Iterator<Item=(char, NodeIndex)> + 'a {

@@ -1,5 +1,7 @@
 use aoc_macro::{generator, solution, sol_test};
 
+aoc_macro::day!();
+
 #[generator]
 fn generator(v: u32) -> u32 { v }
 
