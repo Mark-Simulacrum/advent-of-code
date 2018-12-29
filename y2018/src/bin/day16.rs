@@ -1,54 +1,10 @@
 use aoc_macro::{generator, solution};
 use hashbrown::HashSet;
-use std::ops;
 
 aoc_macro::day!();
 
-#[path = "day16/ops.rs"]
-mod op_codes;
-
-use self::op_codes::*;
-
-#[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
-pub struct Registers {
-    a: u32,
-    b: u32,
-    c: u32,
-    d: u32,
-}
-
-impl ops::Index<u32> for Registers {
-    type Output = u32;
-    fn index(&self, idx: u32) -> &u32 {
-        match idx {
-            0 => &self.a,
-            1 => &self.b,
-            2 => &self.c,
-            3 => &self.d,
-            _ => panic!("idx {} is not a register"),
-        }
-    }
-}
-
-impl ops::IndexMut<u32> for Registers {
-    fn index_mut(&mut self, idx: u32) -> &mut u32 {
-        match idx {
-            0 => &mut self.a,
-            1 => &mut self.b,
-            2 => &mut self.c,
-            3 => &mut self.d,
-            _ => panic!("idx {} is not a register"),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct RawOp {
-    code: u32,
-    a: u32,
-    b: u32,
-    c: u32,
-}
+use y2018::device::{Registers, RawOp};
+use y2018::device::op_codes::*;
 
 #[derive(Copy, Clone, Debug)]
 struct Sample {
@@ -77,13 +33,8 @@ fn generator((samples_input, raw_program): (&str, &str)) -> Out {
             continue;
         }
         if line.starts_with("Before: ") || line.starts_with("After: ") {
-            let mut it = line[9..19].split(", ").map(|d| d.parse::<u32>().unwrap());
-            let reg = Registers {
-                a: it.next().unwrap(),
-                b: it.next().unwrap(),
-                c: it.next().unwrap(),
-                d: it.next().unwrap(),
-            };
+            let it = line[9..19].split(", ").map(|d| d.parse::<u32>().unwrap());
+            let reg = Registers::from(it);
             if line.contains("Before") {
                 before = Some(reg);
             } else {
@@ -141,7 +92,8 @@ static OPS: &[fn(RawOp, &mut Registers)] = &[
 
 #[solution(part1,
     example_input = generator(EXAMPLE),
-    example = 1)]
+    example = 1,
+    expect = 517)]
 fn part1((input, _): Out) -> u32 {
     let mut count = 0;
     for sample in input {
@@ -160,7 +112,8 @@ fn part1((input, _): Out) -> u32 {
 
 #[solution(part2,
     example_input = generator(EXAMPLE),
-    example = 0)]
+    example = 0,
+    expect = 667)]
 fn part2((input, program): Out, example: bool) -> u32 {
     if example { return 0; }
     let mut by_code = vec![vec![]; 16];
