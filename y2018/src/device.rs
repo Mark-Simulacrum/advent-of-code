@@ -1,10 +1,17 @@
 use std::ops;
+use std::fmt;
 
 pub mod op_codes;
 
-#[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Copy, Clone, PartialEq, Eq)]
 pub struct Registers {
     r: [u32; 6],
+}
+
+impl fmt::Debug for Registers {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:9?}", self.r)
+    }
 }
 
 impl<I> From<I> for Registers
