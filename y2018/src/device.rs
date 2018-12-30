@@ -59,19 +59,50 @@ pub struct RawOp {
     pub c: u32,
 }
 
+#[derive(Copy, Clone)]
+pub struct Instruction {
+    op: Op,
+    inputs: RawOp,
+}
+
+impl fmt::Debug for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let RawOp { a, b, c, .. } = self.inputs;
+        match self.inputs.code {
+            0 => write!(f, "r[{}] = r[{}] + {}", c, a, b)?,
+            1 => write!(f, "r[{}] = r[{}] + r[{}]", c, a, b)?,
+            2 => write!(f, "r[{}] = {} == r[{}]", c, a, b)?,
+            3 => write!(f, "r[{}] = r[{}] == {}", c, a, b)?,
+            4 => write!(f, "r[{}] = r[{}] == r[{}]", c, a, b)?,
+            5 => write!(f, "r[{}] = {} > r[{}]", c, a, b)?,
+            6 => write!(f, "r[{}] = r[{}] > {}", c, a, b)?,
+            7 => write!(f, "r[{}] = r[{}] > r[{}]", c, a, b)?,
+            8 => write!(f, "r[{}] = r[{}] * {}", c, a, b)?,
+            9 => write!(f, "r[{}] = r[{}] * r[{}]", c, a, b)?,
+            10 => write!(f, "r[{}] = {}", c, a)?,
+            11 => write!(f, "r[{}] = r[{}]", c, a)?,
+            12 => write!(f, "r[{}] = r[{}] & {}", c, a, b)?,
+            13 => write!(f, "r[{}] = r[{}] | {}", c, a, b)?,
+            _ => unimplemented!("unhandled code: {:?}", self.inputs.code),
+        }
+        Ok(())
+    }
+}
+
 pub type Op = fn(RawOp, &mut Registers);
 
+#[derive(Clone, Default)]
 pub struct Device {
     pub ip: usize,
     pub ip_reg: u32,
-    pub instructions: Vec<(RawOp, Op)>,
+    pub instructions: Vec<Instruction>,
 }
 
 impl Device {
     pub fn step(&mut self, registers: &mut Registers) -> bool {
-        if let Some(&(raw, op)) = self.instructions.get(self.ip) {
+        if let Some(instr) = self.instructions.get(self.ip) {
             registers[self.ip_reg] = self.ip as u32;
-            op(raw, registers);
+            (instr.op)(instr.inputs, registers);
             self.ip = registers[self.ip_reg] as usize;
             self.ip += 1;
             true
@@ -89,19 +120,21 @@ impl Device {
                 continue;
             }
 
-            let op = match &line[..4] {
-                "addi" => op_codes::addi,
-                "addr" => op_codes::addr,
-                "eqir" => op_codes::eqir,
-                "eqri" => op_codes::eqri,
-                "eqrr" => op_codes::eqrr,
-                "gtir" => op_codes::gtir,
-                "gtri" => op_codes::gtri,
-                "gtrr" => op_codes::gtrr,
-                "muli" => op_codes::muli,
-                "mulr" => op_codes::mulr,
-                "seti" => op_codes::seti,
-                "setr" => op_codes::setr,
+            let (code, op) = match &line[..4] {
+                "addi" => (0, op_codes::addi as Op),
+                "addr" => (1, op_codes::addr as Op),
+                "eqir" => (2, op_codes::eqir as Op),
+                "eqri" => (3, op_codes::eqri as Op),
+                "eqrr" => (4, op_codes::eqrr as Op),
+                "gtir" => (5, op_codes::gtir as Op),
+                "gtri" => (6, op_codes::gtri as Op),
+                "gtrr" => (7, op_codes::gtrr as Op),
+                "muli" => (8, op_codes::muli as Op),
+                "mulr" => (9, op_codes::mulr as Op),
+                "seti" => (10, op_codes::seti as Op),
+                "setr" => (11, op_codes::setr as Op),
+                "bani" => (12, op_codes::bani as Op),
+                "bori" => (13, op_codes::bori as Op),
                 other => unreachable!("unexpected instruction: {:?}", other),
             };
 
@@ -114,18 +147,13 @@ impl Device {
             let b = it.next().unwrap();
             let c = it.next().unwrap();
 
-            let raw = RawOp {
-                code: 0, // irrelevant
-                a,
-                b,
-                c,
-            };
+            let raw = RawOp { code, a, b, c };
 
-            instructions.push((raw, op));
+            instructions.push(Instruction { inputs: raw, op });
         }
         Device {
             ip: 0,
-            ip_reg: ip_reg.unwrap(),
+            ip_reg: ip_reg.expect("did not find #ip"),
             instructions,
         }
     }
