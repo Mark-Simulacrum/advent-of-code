@@ -6,10 +6,11 @@ type Out<'a> = Vec<u8>;
 
 #[generator]
 fn generator(input: &str) -> Out {
-    input.trim().split(' ')
+    input
+        .trim()
+        .split(' ')
         .map(|v| v.parse::<u8>().expect(v))
         .collect()
-
 }
 
 #[derive(Copy, Clone)]
@@ -41,10 +42,7 @@ impl Node {
         let metadata = v.read();
         let children = (0..children).map(|_| Node::parse(v)).collect();
         let metadata = (0..metadata).map(|_| v.read()).collect();
-        Node {
-            children,
-            metadata,
-        }
+        Node { children, metadata }
     }
 
     fn all(&self) -> Vec<&Node> {
@@ -60,7 +58,11 @@ impl Node {
         } else {
             for idx in &self.metadata {
                 let idx = idx - 1;
-                sum += self.children.get(idx as usize).map(|c| c.value()).unwrap_or(0);
+                sum += self
+                    .children
+                    .get(idx as usize)
+                    .map(|c| c.value())
+                    .unwrap_or(0);
             }
         }
         sum
@@ -76,11 +78,15 @@ fn part1(input: Out) -> u32 {
     let mut sum = 0;
     while !input.is_empty() {
         let node = Node::parse(&mut input);
-        sum += node.all().iter().flat_map(|n| n.metadata.iter()).map(|v| *v as u32).sum::<u32>();
+        sum += node
+            .all()
+            .iter()
+            .flat_map(|n| n.metadata.iter())
+            .map(|v| *v as u32)
+            .sum::<u32>();
     }
     sum
 }
-
 
 #[solution(part2,
     example_input = generator(EXAMPLE),

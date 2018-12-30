@@ -1,6 +1,6 @@
-use aoc_macro::{generator, solution, sol_test};
-use std::fmt;
+use aoc_macro::{generator, sol_test, solution};
 use generational_arena::{Arena, Index};
+use std::fmt;
 
 aoc_macro::day!();
 
@@ -30,7 +30,11 @@ impl Circle {
         let fake = fake.insert(());
 
         let mut a = Arena::with_capacity(cap);
-        let cursor = a.insert(Node { value: 0, prev: fake, next: fake });
+        let cursor = a.insert(Node {
+            value: 0,
+            prev: fake,
+            next: fake,
+        });
         a[cursor].prev = cursor;
         a[cursor].next = cursor;
         Circle {

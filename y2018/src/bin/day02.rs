@@ -42,17 +42,25 @@ wvxyz
 fn part2<'a>(input: &str) -> String {
     for line_a in input.lines() {
         'line_b: for line_b in input.lines() {
-            let it = line_a.as_bytes().iter().cloned().zip(line_b.as_bytes().iter().cloned());
+            let it = line_a
+                .as_bytes()
+                .iter()
+                .cloned()
+                .zip(line_b.as_bytes().iter().cloned());
             let mut difference = 0;
             for (a, b) in it {
-                if a == b { continue; }
+                if a == b {
+                    continue;
+                }
                 difference += 1;
                 if difference > 1 {
                     continue 'line_b;
                 }
             }
             if difference == 1 {
-                return line_a.chars().zip(line_b.chars())
+                return line_a
+                    .chars()
+                    .zip(line_b.chars())
                     .filter(|(a, b)| a == b)
                     .map(|(a, _)| a)
                     .collect::<String>();

@@ -1,5 +1,5 @@
-use std::ops;
 use std::fmt;
+use std::ops;
 
 pub mod op_codes;
 
@@ -15,7 +15,8 @@ impl fmt::Debug for Registers {
 }
 
 impl<I> From<I> for Registers
-    where I: Iterator<Item=u32>,
+where
+    I: Iterator<Item = u32>,
 {
     fn from(mut it: I) -> Registers {
         Registers {

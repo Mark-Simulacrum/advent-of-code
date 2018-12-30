@@ -53,16 +53,15 @@ struct CartPosition {
 }
 
 impl CartMap {
-    fn insert(
-        &mut self,
-        position: CartPosition,
-        facing: Direction,
-    ) {
-        self.0.insert(position, Cart {
+    fn insert(&mut self, position: CartPosition, facing: Direction) {
+        self.0.insert(
             position,
-            facing,
-            turn: 0,
-        });
+            Cart {
+                position,
+                facing,
+                turn: 0,
+            },
+        );
     }
 }
 
@@ -107,27 +106,38 @@ fn generator(input: &str) -> Out {
     for (line_idx, line) in input.lines().enumerate() {
         for (ch_idx, ch) in line.as_bytes().iter().enumerate() {
             let ch = *ch as char;
-            if ch == ' ' { continue; }
+            if ch == ' ' {
+                continue;
+            }
 
-            let cur = CartPosition { x: ch_idx, y: line_idx };
+            let cur = CartPosition {
+                x: ch_idx,
+                y: line_idx,
+            };
             match ch {
-                '-' | '>' | '<' => { }
-                '|' | '^' | 'v' => { }
+                '-' | '>' | '<' => {}
+                '|' | '^' | 'v' => {}
                 '\\' => {
-                    corners.insert(cur, Corner {
-                        up: Direction::Left,
-                        down: Direction::Right,
-                        left: Direction::Up,
-                        right: Direction::Down,
-                    });
+                    corners.insert(
+                        cur,
+                        Corner {
+                            up: Direction::Left,
+                            down: Direction::Right,
+                            left: Direction::Up,
+                            right: Direction::Down,
+                        },
+                    );
                 }
                 '/' => {
-                    corners.insert(cur, Corner {
-                        up: Direction::Right,
-                        down: Direction::Left,
-                        left: Direction::Down,
-                        right: Direction::Up,
-                    });
+                    corners.insert(
+                        cur,
+                        Corner {
+                            up: Direction::Right,
+                            down: Direction::Left,
+                            left: Direction::Down,
+                            right: Direction::Up,
+                        },
+                    );
                 }
                 '+' => {
                     intersections.insert(cur);

@@ -17,11 +17,15 @@ impl fmt::Display for Coordinate {
 
 #[generator]
 fn generator(input: &str) -> Vec<Coordinate> {
-    input.trim().lines().map(|l| {
-        let x = l[..l.find(",").unwrap()].parse::<isize>().unwrap();
-        let y = l[l.find(" ").unwrap() + 1..].parse::<isize>().unwrap();
-        Coordinate { x, y }
-    }).collect()
+    input
+        .trim()
+        .lines()
+        .map(|l| {
+            let x = l[..l.find(",").unwrap()].parse::<isize>().unwrap();
+            let y = l[l.find(" ").unwrap() + 1..].parse::<isize>().unwrap();
+            Coordinate { x, y }
+        })
+        .collect()
 }
 
 impl Coordinate {
@@ -71,7 +75,9 @@ fn part1(landmarks: Vec<Coordinate>) -> usize {
         for y in -1000..=1000 {
             let c = Coordinate { x, y };
             if let Some((idx, _)) = closest_to(c, &landmarks) {
-                if skip[idx] { continue; }
+                if skip[idx] {
+                    continue;
+                }
                 spaces_closest[idx] += 1;
             }
         }

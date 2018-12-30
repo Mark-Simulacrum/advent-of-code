@@ -18,7 +18,6 @@ fn part1(_input: Out) -> u32 {
     0
 }
 
-
 #[solution(part2,
     example_input = generator(EXAMPLE),
     example = 0)]

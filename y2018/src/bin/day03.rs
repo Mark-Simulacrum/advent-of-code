@@ -1,5 +1,5 @@
 use aoc_macro::{generator, solution};
-use bitvec::{LittleEndian, BitVec};
+use bitvec::{BitVec, LittleEndian};
 use regex::Regex;
 use std::num::NonZeroU16;
 
@@ -17,24 +17,27 @@ struct Claim {
 #[generator]
 fn generator(input: &str) -> Vec<Claim> {
     let r = Regex::new(r"#(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
-    input.trim().lines().map(|line| {
-        let c = r.captures(&line).unwrap();
-        Claim {
-            id: NonZeroU16::new(c[1].parse().unwrap()).unwrap(),
-            left: c[2].parse().unwrap(),
-            top: c[3].parse().unwrap(),
-            width: c[4].parse().unwrap(),
-            height: c[5].parse().unwrap(),
-        }
-    }).map(|c| {
-        Claim {
+    input
+        .trim()
+        .lines()
+        .map(|line| {
+            let c = r.captures(&line).unwrap();
+            Claim {
+                id: NonZeroU16::new(c[1].parse().unwrap()).unwrap(),
+                left: c[2].parse().unwrap(),
+                top: c[3].parse().unwrap(),
+                width: c[4].parse().unwrap(),
+                height: c[5].parse().unwrap(),
+            }
+        })
+        .map(|c| Claim {
             id: c.id,
             left: c.left + 1,
             top: c.top + 1,
             width: c.width - 1,
             height: c.height - 1,
-        }
-    }).collect()
+        })
+        .collect()
 }
 
 #[solution(part1,

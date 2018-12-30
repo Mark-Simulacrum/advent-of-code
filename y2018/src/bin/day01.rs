@@ -4,7 +4,11 @@ aoc_macro::day!();
 
 #[generator]
 fn generator(input: &str) -> Vec<i32> {
-    input.trim().lines().map(|l| l.parse::<i32>().unwrap()).collect()
+    input
+        .trim()
+        .lines()
+        .map(|l| l.parse::<i32>().unwrap())
+        .collect()
 }
 
 #[solution(part1,
@@ -41,10 +45,8 @@ fn part2(input: Vec<i32>) -> i32 {
     let mut cur = 0;
     let mut running_total = Vec::with_capacity(input.len());
     // There cannot be more than shift moduli
-    let mut by_modulo = fnv::FnvHashMap::with_capacity_and_hasher(
-        shift.abs() as usize,
-        Default::default()
-    );
+    let mut by_modulo =
+        fnv::FnvHashMap::with_capacity_and_hasher(shift.abs() as usize, Default::default());
     for (idx, item) in input.iter().enumerate() {
         cur += item;
         let entry = RunningTotal {
@@ -69,7 +71,9 @@ fn part2(input: Vec<i32>) -> i32 {
     let mut candidate = None::<Candidate>;
     for a in running_total.iter() {
         for b in by_modulo[&a.modulo].iter() {
-            if a.idx == b.idx { continue; }
+            if a.idx == b.idx {
+                continue;
+            }
             let delta = a.value - b.value;
 
             // We want the shift and the delta to have the same sign:
@@ -84,7 +88,10 @@ fn part2(input: Vec<i32>) -> i32 {
             // We want the lowest period -- the sooner the value repeats, the better.
             // However, division is slow, so just consider the delta -- we're dividing by the
             // same shift in all cases anyway.
-            if candidate.map(|c| c.delta < delta.abs() as usize).unwrap_or(false) {
+            if candidate
+                .map(|c| c.delta < delta.abs() as usize)
+                .unwrap_or(false)
+            {
                 continue;
             }
             // We want the candidate with the lowest offset within the cycle,

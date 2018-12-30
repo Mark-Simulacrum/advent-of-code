@@ -40,23 +40,24 @@ fn react(mut input: String) -> String {
     input
 }
 
-#[solution(part1,
+#[solution(
+    part1,
     example_input = "dabAcCaCBAcCcaDA",
     example = 10,
-    expect = 10598)]
+    expect = 10598
+)]
 fn part1(input: &str) -> usize {
     react(input.to_string()).len()
 }
 
-#[solution(part2,
-    example_input = "dabAcCaCBAcCcaDA",
-    example = 4,
-    expect = 5312)]
+#[solution(part2, example_input = "dabAcCaCBAcCcaDA", example = 4, expect = 5312)]
 fn part2(input: &str) -> usize {
     let mut best = input.len();
     for unit in b'a'..=b'z' {
         let unit = unit as char;
-        let stripped = input.replace(unit, "").replace(unit.to_ascii_uppercase(), "");
+        let stripped = input
+            .replace(unit, "")
+            .replace(unit.to_ascii_uppercase(), "");
         best = std::cmp::min(best, react(stripped).len());
     }
     best

@@ -1,12 +1,12 @@
-use aoc_macro::{generator, solution, sol_test};
-use petgraph::Graph;
-use petgraph::graph::NodeIndex;
-use std::collections::BTreeMap;
-use hashbrown::{HashSet, HashMap};
-use std::cmp::{self, Ordering};
-use std::fmt::{self, Write};
-use petgraph::visit::Bfs;
+use aoc_macro::{generator, sol_test, solution};
+use hashbrown::{HashMap, HashSet};
 use petgraph::algo::astar;
+use petgraph::graph::NodeIndex;
+use petgraph::visit::Bfs;
+use petgraph::Graph;
+use std::cmp::{self, Ordering};
+use std::collections::BTreeMap;
+use std::fmt::{self, Write};
 
 aoc_macro::day!();
 
@@ -28,22 +28,26 @@ impl Position {
         Position { y, x: self.x }
     }
     fn down(self) -> Position {
-        Position { x: self.x, y: self.y + 1 }
+        Position {
+            x: self.x,
+            y: self.y + 1,
+        }
     }
     fn left(self) -> Position {
-        Position { x: self.x.checked_sub(1).unwrap(), y: self.y }
+        Position {
+            x: self.x.checked_sub(1).unwrap(),
+            y: self.y,
+        }
     }
     fn right(self) -> Position {
-        Position { x: self.x + 1, y: self.y }
+        Position {
+            x: self.x + 1,
+            y: self.y,
+        }
     }
 
     fn cross(self) -> [Position; 4] {
-        [
-            self.up(),
-            self.left(),
-            self.right(),
-            self.down(),
-        ]
+        [self.up(), self.left(), self.right(), self.down()]
     }
 }
 
@@ -61,8 +65,7 @@ impl Cell {
         let r = match enemy {
             Cell::Goblin(h, v) => Cell::Goblin(h.saturating_sub(elf_power), v),
             Cell::Elf(h, v) => Cell::Elf(h.saturating_sub(3), v),
-            Cell::Wall |
-            Cell::Empty => panic!("cannot attack {:?}", self),
+            Cell::Wall | Cell::Empty => panic!("cannot attack {:?}", self),
         };
         if r.health() == 0 {
             None
@@ -81,21 +84,17 @@ impl Cell {
 
     fn visited(self) -> bool {
         match self {
-            Cell::Goblin(_, visited) |
-            Cell::Elf(_, visited) => {
-                visited
-            }
+            Cell::Goblin(_, visited) | Cell::Elf(_, visited) => visited,
             Cell::Wall | Cell::Empty => false,
         }
     }
 
     fn set_visited(&mut self, v: bool) {
         match self {
-            Cell::Goblin(_, visited) |
-            Cell::Elf(_, visited) => {
+            Cell::Goblin(_, visited) | Cell::Elf(_, visited) => {
                 *visited = v;
             }
-            Cell::Wall | Cell::Empty => {},
+            Cell::Wall | Cell::Empty => {}
         }
     }
 
@@ -103,8 +102,7 @@ impl Cell {
         match self {
             Cell::Goblin(h, ..) => h,
             Cell::Elf(h, ..) => h,
-            Cell::Wall |
-            Cell::Empty => panic!("cannot get health of {:?}", self),
+            Cell::Wall | Cell::Empty => panic!("cannot get health of {:?}", self),
         }
     }
 
@@ -147,11 +145,11 @@ impl fmt::Debug for State {
                 Cell::Goblin(h, _) => {
                     write!(to_print, "G({}) ", h)?;
                     "G"
-                },
+                }
                 Cell::Elf(h, _) => {
                     write!(to_print, "E({}) ", h)?;
                     "E"
-                },
+                }
                 Cell::Empty => ".",
                 Cell::Wall => "#",
             };
@@ -185,8 +183,10 @@ impl PartialOrd for Candidate {
 impl Ord for Candidate {
     fn cmp(&self, other: &Candidate) -> Ordering {
         match (self, other) {
-            (Candidate::Immediate { us: u1, enemy: e1 },
-             Candidate::Immediate { us: u2, enemy: e2 }) => {
+            (
+                Candidate::Immediate { us: u1, enemy: e1 },
+                Candidate::Immediate { us: u2, enemy: e2 },
+            ) => {
                 assert_eq!(u1, u2);
                 for pos in &u1.cross() {
                     if pos == e1 {
@@ -198,23 +198,27 @@ impl Ord for Candidate {
                 panic!("could not find enemy in cross around us");
             }
             // An immediate candidate is always closer than the path.
-            (Candidate::Immediate { .. }, Candidate::Path { .. }) => {
-                Ordering::Less
-            }
+            (Candidate::Immediate { .. }, Candidate::Path { .. }) => Ordering::Less,
             (
-                Candidate::Path { to: to1, distance: d1, next: n1, .. },
-                Candidate::Path { to: to2, distance: d2, next: n2, .. },
+                Candidate::Path {
+                    to: to1,
+                    distance: d1,
+                    next: n1,
+                    ..
+                },
+                Candidate::Path {
+                    to: to2,
+                    distance: d2,
+                    next: n2,
+                    ..
+                },
             ) => {
                 // shortest distance;
                 // reading order for destination;
                 // reading order for next step
-                d1.cmp(&d2)
-                    .then(to1.cmp(&to2))
-                    .then(n1.cmp(&n2))
+                d1.cmp(&d2).then(to1.cmp(&to2)).then(n1.cmp(&n2))
             }
-            (Candidate::Path { .. }, Candidate::Immediate { .. }) => {
-                other.cmp(self)
-            }
+            (Candidate::Path { .. }, Candidate::Immediate { .. }) => other.cmp(self),
         }
     }
 }
@@ -266,7 +270,8 @@ fn path_length(
             if !cells[&cross_pos].is_empty() {
                 continue;
             }
-            let by = *map.entry(cross_pos)
+            let by = *map
+                .entry(cross_pos)
                 .or_insert_with(|| g.add_node((cross_pos, cells[&cross_pos])));
             g.update_edge(cur, by, ());
         }
@@ -298,7 +303,8 @@ fn path_length(
                     next.insert(path);
                 }
             }
-            paths.entry(neighbor)
+            paths
+                .entry(neighbor)
                 .or_insert_with(HashSet::new)
                 .extend(next);
         }
@@ -317,9 +323,10 @@ fn path_length(
         }
     }
 
-    best_paths.into_iter().map(|path| {
-        (path.len(), g[path.next()].0)
-    }).collect()
+    best_paths
+        .into_iter()
+        .map(|path| (path.len(), g[path.next()].0))
+        .collect()
 }
 
 impl State {
@@ -335,20 +342,19 @@ impl State {
             }
             cell.set_visited(true);
             let enemies = match cell {
-                Cell::Goblin(..) => {
-                    self.cells.iter()
-                        .map(|(&k, &v)| (k, v))
-                        .filter(|(_, v)| v.is_elf())
-                        .collect::<Vec<_>>()
-                }
-                Cell::Elf(..) => {
-                    self.cells.iter()
-                        .map(|(&k, &v)| (k, v))
-                        .filter(|(_, v)| v.is_goblin())
-                        .collect::<Vec<_>>()
-                }
-                Cell::Wall |
-                Cell::Empty => continue,
+                Cell::Goblin(..) => self
+                    .cells
+                    .iter()
+                    .map(|(&k, &v)| (k, v))
+                    .filter(|(_, v)| v.is_elf())
+                    .collect::<Vec<_>>(),
+                Cell::Elf(..) => self
+                    .cells
+                    .iter()
+                    .map(|(&k, &v)| (k, v))
+                    .filter(|(_, v)| v.is_goblin())
+                    .collect::<Vec<_>>(),
+                Cell::Wall | Cell::Empty => continue,
             };
             if enemies.is_empty() {
                 return true;
@@ -357,7 +363,8 @@ impl State {
             let mut candidate = None;
             for &(enemy_pos, _) in enemies {
                 for &cross_pos in &enemy_pos.cross() {
-                    if cross_pos == pos { // already at the enemy
+                    if cross_pos == pos {
+                        // already at the enemy
                         let new = Candidate::Immediate {
                             us: pos,
                             enemy: enemy_pos,
@@ -411,21 +418,26 @@ impl State {
                 pos
             };
 
-            let enemy = pos.cross().iter().filter_map(|attack_pos| {
-                self.cells.get(&attack_pos).and_then(|e| {
-                    if !cell.is_enemy(*e) {
-                        return None;
-                    }
-                    Some((*attack_pos, *e))
+            let enemy = pos
+                .cross()
+                .iter()
+                .filter_map(|attack_pos| {
+                    self.cells.get(&attack_pos).and_then(|e| {
+                        if !cell.is_enemy(*e) {
+                            return None;
+                        }
+                        Some((*attack_pos, *e))
+                    })
                 })
-            }).min_by_key(|e| (e.1.health(), e.0));
+                .min_by_key(|e| (e.1.health(), e.0));
             let (enemy_pos, enemy_cell) = if let Some(e) = enemy {
                 e
             } else {
                 continue;
             };
             let enemy_cell = cell.attack(enemy_cell, self.elf_power);
-            self.cells.insert(enemy_pos, enemy_cell.unwrap_or(Cell::Empty));
+            self.cells
+                .insert(enemy_pos, enemy_cell.unwrap_or(Cell::Empty));
             self.cells.insert(pos, cell);
         }
 
@@ -443,7 +455,9 @@ impl State {
     fn health(&self) -> Option<usize> {
         let elves_left = self.elves_alive();
         if elves_left == 0 {
-            let health = self.cells.values()
+            let health = self
+                .cells
+                .values()
                 .filter(|c| c.is_goblin())
                 .map(|c| c.health())
                 .sum::<usize>();
@@ -451,7 +465,9 @@ impl State {
         }
         let goblins_left = self.goblins_alive();
         if goblins_left == 0 {
-            let health = self.cells.values()
+            let health = self
+                .cells
+                .values()
                 .filter(|c| c.is_elf())
                 .map(|c| c.health())
                 .sum::<usize>();
@@ -466,14 +482,20 @@ fn generator(input: &str) -> State {
     let mut cells = BTreeMap::new();
     for (line_idx, line) in input.trim().lines().enumerate() {
         for (ch_idx, ch) in line.chars().enumerate() {
-            let pos = Position { y: line_idx, x: ch_idx };
-            cells.insert(pos, match ch {
-                '#' => Cell::Wall,
-                'E' => Cell::Elf(200, false),
-                'G' => Cell::Goblin(200, false),
-                '.' => Cell::Empty,
-                _ => panic!("unknown: {:?}", ch),
-            });
+            let pos = Position {
+                y: line_idx,
+                x: ch_idx,
+            };
+            cells.insert(
+                pos,
+                match ch {
+                    '#' => Cell::Wall,
+                    'E' => Cell::Elf(200, false),
+                    'G' => Cell::Goblin(200, false),
+                    '.' => Cell::Empty,
+                    _ => panic!("unknown: {:?}", ch),
+                },
+            );
         }
     }
     State {

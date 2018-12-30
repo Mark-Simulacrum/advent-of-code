@@ -14,16 +14,28 @@ struct Position {
 
 impl Position {
     fn up(self) -> Position {
-        Position { x: self.x, y: self.y.checked_sub(1).expect("Cannot go up from y=0") }
+        Position {
+            x: self.x,
+            y: self.y.checked_sub(1).expect("Cannot go up from y=0"),
+        }
     }
     fn down(self) -> Position {
-        Position { x: self.x, y: self.y + 1 }
+        Position {
+            x: self.x,
+            y: self.y + 1,
+        }
     }
     fn left(self) -> Position {
-        Position { x: self.x.checked_sub(1).expect("cannot go left from x=0"), y: self.y }
+        Position {
+            x: self.x.checked_sub(1).expect("cannot go left from x=0"),
+            y: self.y,
+        }
     }
     fn right(self) -> Position {
-        Position { x: self.x + 1, y: self.y }
+        Position {
+            x: self.x + 1,
+            y: self.y,
+        }
     }
 }
 
@@ -69,10 +81,7 @@ fn generator(input: &str) -> State {
 
     let mut clays = HashMap::new();
     for clay in &clay {
-        clays
-            .entry(clay.y)
-            .or_insert_with(Vec::new)
-            .push(clay.x);
+        clays.entry(clay.y).or_insert_with(Vec::new).push(clay.x);
     }
     for (_, clays) in &mut clays {
         clays.sort();
@@ -151,7 +160,7 @@ impl State {
         match self.water.get(&pos).cloned() {
             Some(Water::Settled) => return Flow::Bedrock,
             Some(Water::Flow) => return Flow::Yes,
-            _ => {},
+            _ => {}
         }
 
         Flow::Yes
@@ -168,7 +177,7 @@ impl State {
     }
 
     fn insert_water(&mut self) {
-        let start_at = Position { x: 500, y: 1};
+        let start_at = Position { x: 500, y: 1 };
         let mut to_visit = vec![start_at];
         let mut visited = 0;
         let mut current_visited = HashSet::new();
@@ -184,8 +193,9 @@ impl State {
             }
 
             let center = at;
-            while self.can_flow_into(at.down()) == Flow::Bedrock &&
-                self.can_flow_into(at.left()) != Flow::Bedrock {
+            while self.can_flow_into(at.down()) == Flow::Bedrock
+                && self.can_flow_into(at.left()) != Flow::Bedrock
+            {
                 at = at.left();
                 self.water.insert(at, Water::Flow);
             }
@@ -193,8 +203,9 @@ impl State {
                 to_visit.push(at.down());
             }
             at = center;
-            while self.can_flow_into(at.down()) == Flow::Bedrock &&
-                self.can_flow_into(at.right()) != Flow::Bedrock {
+            while self.can_flow_into(at.down()) == Flow::Bedrock
+                && self.can_flow_into(at.right()) != Flow::Bedrock
+            {
                 at = at.right();
                 self.water.insert(at, Water::Flow);
             }
@@ -231,19 +242,13 @@ impl State {
                     (Some(before), Some(after)) => {
                         let before = before + 1;
                         let after = after - 1;
-                        let between_clay = (before..=after).into_iter().all(|x| {
-                            self.water.contains_key(&Position {
-                                y: pos.y,
-                                x: x,
-                            })
-                        });
+                        let between_clay = (before..=after)
+                            .into_iter()
+                            .all(|x| self.water.contains_key(&Position { y: pos.y, x: x }));
                         if between_clay {
                             let mut new = false;
                             for x in before..=after {
-                                let r = self.water.insert(Position {
-                                    y: pos.y,
-                                    x,
-                                }, Water::Settled);
+                                let r = self.water.insert(Position { y: pos.y, x }, Water::Settled);
                                 if r == Some(Water::Flow) {
                                     new = true;
                                 }
@@ -266,7 +271,10 @@ impl State {
     fn count_in_range(&self) -> usize {
         let min_y = self.clay.iter().map(|p| p.y).min().unwrap();
         let max_y = self.clay.iter().map(|p| p.y).max().unwrap();
-        self.water.keys().filter(|p| min_y <= p.y && p.y <= max_y).count()
+        self.water
+            .keys()
+            .filter(|p| min_y <= p.y && p.y <= max_y)
+            .count()
     }
 }
 
@@ -295,7 +303,11 @@ fn part2(mut input: Out) -> usize {
         last_count.rotate_left(1);
         *last_count.last_mut().unwrap() = input.water.len();
     }
-    input.water.values().filter(|w| **w == Water::Settled).count()
+    input
+        .water
+        .values()
+        .filter(|w| **w == Water::Settled)
+        .count()
 }
 
 static EXAMPLE: &str = "

@@ -24,27 +24,33 @@ struct Record {
 fn generator(input: &str) -> Vec<Record> {
     let datetime = Regex::new(r"\[1518-(\d\d)-(\d\d) (\d\d):(\d\d)\]").unwrap();
     let guard = Regex::new(r"Guard #(\d+) begins shift").unwrap();
-    input.trim().lines().map(|line| {
-        let dtc = datetime.captures(&line).unwrap();
+    input
+        .trim()
+        .lines()
+        .map(|line| {
+            let dtc = datetime.captures(&line).unwrap();
 
-        let mut base = Record {
-            date: (dtc[1].parse().unwrap(), dtc[2].parse().unwrap()),
-            hour: dtc[3].parse().unwrap(),
-            minute: dtc[4].parse().unwrap(),
-            event: Event::Wake,
-        };
+            let mut base = Record {
+                date: (dtc[1].parse().unwrap(), dtc[2].parse().unwrap()),
+                hour: dtc[3].parse().unwrap(),
+                minute: dtc[4].parse().unwrap(),
+                event: Event::Wake,
+            };
 
-        if let Some(gc) = guard.captures(&line) {
-            base.event = Event::BeginShift { id: gc[1].parse().unwrap() };
-        } else if line.contains("falls asleep") {
-            base.event = Event::Asleep;
-        } else {
-            assert!(line.contains("wakes up"));
-            base.event = Event::Wake;
-        }
+            if let Some(gc) = guard.captures(&line) {
+                base.event = Event::BeginShift {
+                    id: gc[1].parse().unwrap(),
+                };
+            } else if line.contains("falls asleep") {
+                base.event = Event::Asleep;
+            } else {
+                assert!(line.contains("wakes up"));
+                base.event = Event::Wake;
+            }
 
-        base
-    }).collect()
+            base
+        })
+        .collect()
 }
 
 static EXAMPLE: &str = "
@@ -125,9 +131,7 @@ fn part2(mut input: Vec<Record>) -> usize {
                 let e = guards.get_mut(&guard_id).unwrap();
                 for minute in asleep_at..record.minute {
                     e[minute as usize] += 1;
-                    *minutes[minute as usize]
-                        .entry(guard_id)
-                        .or_insert(0) += 1;
+                    *minutes[minute as usize].entry(guard_id).or_insert(0) += 1;
                 }
             }
             Event::BeginShift { id } => {

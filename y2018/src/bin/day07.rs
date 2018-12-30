@@ -1,24 +1,22 @@
 use aoc_macro::{generator, solution};
-use petgraph::graph::NodeIndex;
-use petgraph::Direction;
-use petgraph::stable_graph::StableGraph;
 use fnv::FnvHashMap;
+use petgraph::graph::NodeIndex;
+use petgraph::stable_graph::StableGraph;
 use petgraph::visit::IntoNodeReferences;
+use petgraph::Direction;
 
 aoc_macro::day!();
 
 type Out = StableGraph<char, ()>;
 
-fn externals<'a>(g: &'a Out) -> impl Iterator<Item=(char, NodeIndex)> + 'a {
-    g
-        .node_references()
-        .filter_map(move |(node, ch)| {
-            if g.edges_directed(node, Direction::Incoming).count() == 0 {
-                Some((*ch, node))
-            } else {
-                None
-            }
-        })
+fn externals<'a>(g: &'a Out) -> impl Iterator<Item = (char, NodeIndex)> + 'a {
+    g.node_references().filter_map(move |(node, ch)| {
+        if g.edges_directed(node, Direction::Incoming).count() == 0 {
+            Some((*ch, node))
+        } else {
+            None
+        }
+    })
 }
 
 #[generator]
@@ -27,7 +25,10 @@ fn generator(input: &str) -> Out {
     let mut nodes = FnvHashMap::default();
     for l in input.trim().lines() {
         let finish = l.chars().nth(5).unwrap();
-        let before = l.chars().nth("Step A must be finished before step ".len()).unwrap();
+        let before = l
+            .chars()
+            .nth("Step A must be finished before step ".len())
+            .unwrap();
 
         let finish = *nodes.entry(finish).or_insert_with(|| g.add_node(finish));
         let before = *nodes.entry(before).or_insert_with(|| g.add_node(before));
@@ -108,7 +109,10 @@ fn part2(mut input: Out, example: bool) -> usize {
                 workers.push(w);
             }
         }
-        workers = workers.into_iter().filter_map(|w| w.tick(&mut input)).collect();
+        workers = workers
+            .into_iter()
+            .filter_map(|w| w.tick(&mut input))
+            .collect();
         roots = externals(&input).collect::<Vec<_>>();
         time += 1;
     }

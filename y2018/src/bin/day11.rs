@@ -1,9 +1,11 @@
-use aoc_macro::{generator, solution, sol_test};
+use aoc_macro::{generator, sol_test, solution};
 
 aoc_macro::day!();
 
 #[generator]
-fn generator(v: u32) -> u32 { v }
+fn generator(v: u32) -> u32 {
+    v
+}
 
 fn power(x: u32, y: u32, serial: u32) -> i32 {
     let rack = x + 10;

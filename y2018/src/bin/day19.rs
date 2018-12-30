@@ -2,8 +2,8 @@ use aoc_macro::{generator, solution};
 
 aoc_macro::day!();
 
-use y2018::device::{Registers, RawOp};
 use y2018::device::op_codes as ops;
+use y2018::device::{RawOp, Registers};
 
 type Out = Device;
 

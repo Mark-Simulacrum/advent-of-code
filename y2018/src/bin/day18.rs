@@ -22,17 +22,29 @@ struct Position {
 impl Position {
     fn add_x(self, dx: isize) -> Option<Position> {
         if dx < 0 {
-            Some(Position { x: self.x.checked_sub(dx.abs() as usize)?, y: self.y })
+            Some(Position {
+                x: self.x.checked_sub(dx.abs() as usize)?,
+                y: self.y,
+            })
         } else {
-            Some(Position { x: self.x.checked_add(dx as usize)?, y: self.y })
+            Some(Position {
+                x: self.x.checked_add(dx as usize)?,
+                y: self.y,
+            })
         }
     }
 
     fn add_y(self, dy: isize) -> Option<Position> {
         if dy < 0 {
-            Some(Position { y: self.y.checked_sub(dy.abs() as usize)?, x: self.x })
+            Some(Position {
+                y: self.y.checked_sub(dy.abs() as usize)?,
+                x: self.x,
+            })
         } else {
-            Some(Position { y: self.y.checked_add(dy as usize)?, x: self.x })
+            Some(Position {
+                y: self.y.checked_add(dy as usize)?,
+                x: self.x,
+            })
         }
     }
 }
@@ -68,22 +80,24 @@ fn generator(input: &str) -> Out {
     let mut max_y = 0;
     for (line_idx, line) in input.trim().lines().enumerate() {
         for (ch_idx, ch) in line.chars().enumerate() {
-            let pos = Position { y: line_idx, x: ch_idx };
+            let pos = Position {
+                y: line_idx,
+                x: ch_idx,
+            };
             max_x = std::cmp::max(max_x, pos.x);
             max_y = std::cmp::max(max_y, pos.y);
-            map.insert(pos, match ch {
-                '#' => Acre::Lumberyard,
-                '|' => Acre::Trees,
-                '.' => Acre::Open,
-                _ => panic!("unknown: {:?}", ch),
-            });
+            map.insert(
+                pos,
+                match ch {
+                    '#' => Acre::Lumberyard,
+                    '|' => Acre::Trees,
+                    '.' => Acre::Open,
+                    _ => panic!("unknown: {:?}", ch),
+                },
+            );
         }
     }
-    State {
-        max_x,
-        max_y,
-        map,
-    }
+    State { max_x, max_y, map }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -100,12 +114,14 @@ impl State {
             if let Some(pos) = pos.add_x(dx) {
                 for dy in -1..=1 {
                     if let Some(pos) = pos.add_y(dy) {
-                        if dx == 0 && dy == 0 { continue; }
+                        if dx == 0 && dy == 0 {
+                            continue;
+                        }
                         match self.map.get(&pos).cloned() {
                             Some(Acre::Open) => counts.open += 1,
                             Some(Acre::Trees) => counts.trees += 1,
                             Some(Acre::Lumberyard) => counts.lumber += 1,
-                            None => {},
+                            None => {}
                         }
                     }
                 }
@@ -141,8 +157,12 @@ impl State {
     }
 
     fn resource_value(&self) -> usize {
-        self.map.values().filter(|a| **a == Acre::Trees).count() *
-        self.map.values().filter(|a| **a == Acre::Lumberyard).count()
+        self.map.values().filter(|a| **a == Acre::Trees).count()
+            * self
+                .map
+                .values()
+                .filter(|a| **a == Acre::Lumberyard)
+                .count()
     }
 }
 
@@ -157,9 +177,7 @@ impl State {
     fn save(&self) -> SavedState {
         let mut v: Vec<_> = self.map.iter().map(|(k, v)| (*k, *v)).collect();
         v.sort_unstable();
-        SavedState {
-            map: v,
-        }
+        SavedState { map: v }
     }
 }
 

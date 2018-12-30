@@ -90,7 +90,8 @@ impl Congruence {
             let ret = Congruence {
                 n: lcm,
                 a: (other.a * m * self.n + self.a * n * other.n) / gcd,
-            }.normalize();
+            }
+            .normalize();
             Some(ret)
         } else {
             None

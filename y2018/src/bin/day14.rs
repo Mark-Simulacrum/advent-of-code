@@ -1,5 +1,5 @@
 #![feature(try_from)]
-use aoc_macro::{generator, solution, sol_test};
+use aoc_macro::{generator, sol_test, solution};
 use std::convert::TryInto;
 
 aoc_macro::day!();
@@ -23,9 +23,12 @@ fn digits(mut v: usize) -> Vec<u8> {
 }
 
 fn recombine(v: &[usize]) -> usize {
-    v.iter().rev().cloned().enumerate().map(|(place, value)| {
-        10usize.pow(place as u32) * value
-    }).sum()
+    v.iter()
+        .rev()
+        .cloned()
+        .enumerate()
+        .map(|(place, value)| 10usize.pow(place as u32) * value)
+        .sum()
 }
 
 sol_test!(digits_1: digits(3232), [3, 2, 3, 2]);
@@ -48,7 +51,7 @@ fn part1(count: &[usize]) -> [u8; 10] {
         recipes.extend(digits);
         a += recipes[a] as usize + 1;
         a %= recipes.len();
-        b += recipes[b]  as usize+ 1;
+        b += recipes[b] as usize + 1;
         b %= recipes.len();
     }
     recipes[count..count + 10].try_into().unwrap()

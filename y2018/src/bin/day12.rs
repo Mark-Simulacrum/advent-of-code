@@ -7,25 +7,28 @@ type Out = (Set, Patterns);
 #[generator]
 fn generator((input, patterns): (&'static str, &'static str)) -> Out {
     let input = input.trim();
-    let patterns = patterns.trim().lines().map(|line| {
-        let mut s = line.split(" => ");
-        let pattern = s.next().unwrap().as_bytes();
-        let p = [
-            pattern[0] == b'#',
-            pattern[1] == b'#',
-            pattern[2] == b'#',
-            pattern[3] == b'#',
-            pattern[4] == b'#',
-        ];
-        let pattern =
-            ((p[0] as u8) << 4) |
-            ((p[1] as u8) << 3) |
-            ((p[2] as u8) << 2) |
-            ((p[3] as u8) << 1) |
-            ((p[4] as u8) << 0);
-        let out = s.next().unwrap().as_bytes()[0] == b'#';
-        (pattern, out)
-    }).collect::<Vec<_>>();
+    let patterns = patterns
+        .trim()
+        .lines()
+        .map(|line| {
+            let mut s = line.split(" => ");
+            let pattern = s.next().unwrap().as_bytes();
+            let p = [
+                pattern[0] == b'#',
+                pattern[1] == b'#',
+                pattern[2] == b'#',
+                pattern[3] == b'#',
+                pattern[4] == b'#',
+            ];
+            let pattern = ((p[0] as u8) << 4)
+                | ((p[1] as u8) << 3)
+                | ((p[2] as u8) << 2)
+                | ((p[3] as u8) << 1)
+                | ((p[4] as u8) << 0);
+            let out = s.next().unwrap().as_bytes()[0] == b'#';
+            (pattern, out)
+        })
+        .collect::<Vec<_>>();
 
     let input = Set::from(input.as_bytes().iter().enumerate().filter_map(|(idx, b)| {
         if *b == b'#' {
@@ -39,9 +42,9 @@ fn generator((input, patterns): (&'static str, &'static str)) -> Out {
 }
 
 mod set {
-    use super::{Window};
-    use std::iter::once;
+    use super::Window;
     use std::fmt;
+    use std::iter::once;
 
     #[derive(Clone)]
     pub struct Set(hashbrown::HashSet<isize>);
@@ -70,7 +73,8 @@ mod set {
     }
 
     impl<I> From<I> for Set
-        where I: IntoIterator<Item=isize>,
+    where
+        I: IntoIterator<Item = isize>,
     {
         fn from(v: I) -> Self {
             Set(v.into_iter().collect())
@@ -90,7 +94,7 @@ mod set {
             self.0.contains(&v)
         }
 
-        pub fn iter<'a>(&'a self) -> impl Iterator<Item=Window> + 'a {
+        pub fn iter<'a>(&'a self) -> impl Iterator<Item = Window> + 'a {
             self.0.iter().flat_map(move |start| {
                 let start = *start;
                 let b = [
@@ -139,12 +143,11 @@ impl Window {
     fn new(center: isize, v: &[bool]) -> Self {
         Window {
             center,
-            range:
-            ((v[0] as u8) << 4) |
-            ((v[1] as u8) << 3) |
-            ((v[2] as u8) << 2) |
-            ((v[3] as u8) << 1) |
-            ((v[4] as u8) << 0)
+            range: ((v[0] as u8) << 4)
+                | ((v[1] as u8) << 3)
+                | ((v[2] as u8) << 2)
+                | ((v[3] as u8) << 1)
+                | ((v[4] as u8) << 0),
         }
     }
 
@@ -161,16 +164,15 @@ impl Patterns {
     fn new(v: Vec<(u8, bool)>) -> Self {
         let map = v.iter().cloned().collect::<fnv::FnvHashMap<_, _>>();
         let mut vec_map = Vec::new();
-        for idx in 0..=0b11111 { // max window
+        for idx in 0..=0b11111 {
+            // max window
             match map.get(&idx) {
                 Some(true) => vec_map.push(true),
                 Some(false) => vec_map.push(false),
                 None => vec_map.push(false),
             }
         }
-        Patterns {
-            map: vec_map,
-        }
+        Patterns { map: vec_map }
     }
 }
 
@@ -210,9 +212,13 @@ fn iterate((input, patterns): Out, cycles: usize) -> isize {
     for i in 1..=cycles {
         cycler.cycle();
         if i % 1_000_000 == 0 {
-            eprintln!("{} / {}: {:.2}%; {}",
-                i, cycles, i as f64 / cycles as f64 * 100.0,
-                cycler.view());
+            eprintln!(
+                "{} / {}: {:.2}%; {}",
+                i,
+                cycles,
+                i as f64 / cycles as f64 * 100.0,
+                cycler.view()
+            );
         }
     }
     cycler.view().count()
@@ -235,8 +241,8 @@ fn part2(input: Out) -> isize {
 }
 
 static EXAMPLE: (&str, &str) = (
-"#..#.#..##......###...###..............",
-"
+    "#..#.#..##......###...###..............",
+    "
 ...## => #
 ..#.. => #
 .#... => #
@@ -250,7 +256,7 @@ static EXAMPLE: (&str, &str) = (
 ##.## => #
 ###.. => #
 ###.# => #
-####. => #"
+####. => #",
 );
 
 static INPUT: (&str, &str) = (

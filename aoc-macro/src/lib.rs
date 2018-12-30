@@ -6,12 +6,12 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned};
-use syn::{Expr, Token, Ident, Path};
 use syn::parse::{Parse, ParseStream, Parser, Result};
+use syn::parse_macro_input;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{ItemFn};
-use syn::{parse_macro_input};
+use syn::ItemFn;
+use syn::{Expr, Ident, Path, Token};
 
 #[derive(Debug)]
 struct TestParams {
@@ -27,25 +27,20 @@ impl Parse for TestParams {
         let expr = input.parse()?;
         input.parse::<Token![,]>()?;
         let expect = input.parse()?;
-        Ok(TestParams {
-            name,
-            expr,
-            expect,
-        })
+        Ok(TestParams { name, expr, expect })
     }
 }
 
 #[proc_macro]
 pub fn sol_test(input: TokenStream) -> TokenStream {
-    let TestParams {
-        name, expr, expect,
-    } = parse_macro_input!(input as TestParams);
+    let TestParams { name, expr, expect } = parse_macro_input!(input as TestParams);
     (quote! {
         #[test]
         fn #name() {
             assert_eq!(#expr, #expect);
         }
-    }).into()
+    })
+    .into()
 }
 
 #[proc_macro_attribute]
@@ -117,17 +112,9 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ret = input.decl.output.clone();
     let args = input.decl.inputs.len();
 
-    let example_arg = if args == 2 {
-        quote!(true)
-    } else {
-        quote!()
-    };
+    let example_arg = if args == 2 { quote!(true) } else { quote!() };
 
-    let normal_arg = if args == 2 {
-        quote!(false)
-    } else {
-        quote!()
-    };
+    let normal_arg = if args == 2 { quote!(false) } else { quote!() };
 
     let SolutionParams {
         part,
@@ -190,7 +177,10 @@ pub fn solution(attr: TokenStream, input: TokenStream) -> TokenStream {
 
         TokenStream::from(res)
     } else {
-        part.span().unstable().error("Only `part1`/`part2` supported").emit();
+        part.span()
+            .unstable()
+            .error("Only `part1`/`part2` supported")
+            .emit();
         TokenStream::new()
     }
 }
@@ -253,13 +243,18 @@ pub fn days(input: TokenStream) -> TokenStream {
     let parser = Punctuated::<Path, Token![,]>::parse_terminated;
     let paths = parser.parse(input).unwrap();
 
-    let modules = paths.clone().iter()
+    let modules = paths
+        .clone()
+        .iter()
         .map(|path| {
             let module = path.segments.first().unwrap().value().ident.clone();
             quote_spanned!(module.span()=> mod #module;)
-        }).collect::<TokenStream2>();
+        })
+        .collect::<TokenStream2>();
 
-    let run_parts = paths.clone().iter()
+    let run_parts = paths
+        .clone()
+        .iter()
         .map(|path| {
             let day_name = path.segments.first().unwrap().value().ident.clone();
             let day_n = day_name.to_string()[3..].parse::<u8>().unwrap();
@@ -294,28 +289,40 @@ pub fn days(input: TokenStream) -> TokenStream {
                     }
                 },
                 _ => {
-                    path.span().unstable().error("only one segments allowed").emit();
+                    path.span()
+                        .unstable()
+                        .error("only one segments allowed")
+                        .emit();
                     unimplemented!()
                 }
             };
             quote!(fn #day_name() { #body })
-        }).collect::<TokenStream2>();
+        })
+        .collect::<TokenStream2>();
 
-    let call_days = paths.clone().iter().map(|path| {
-        let ident = path.segments.first().unwrap().value().ident.clone();
-        quote! {
-            #ident();
-        }
-    }).collect::<TokenStream2>();
+    let call_days = paths
+        .clone()
+        .iter()
+        .map(|path| {
+            let ident = path.segments.first().unwrap().value().ident.clone();
+            quote! {
+                #ident();
+            }
+        })
+        .collect::<TokenStream2>();
 
-    let bench_days = paths.clone().iter().map(|path| {
-        let ident = path.segments.first().unwrap().value().ident.clone();
-        quote! {
-            #ident::bench_gen(&format!("{}::generator", stringify!(#ident)), &mut c);
-            #ident::part1_bench_soln(&format!("{}::part1", stringify!(#ident)), &mut c);
-            #ident::part2_bench_soln(&format!("{}::part2", stringify!(#ident)), &mut c);
-        }
-    }).collect::<TokenStream2>();
+    let bench_days = paths
+        .clone()
+        .iter()
+        .map(|path| {
+            let ident = path.segments.first().unwrap().value().ident.clone();
+            quote! {
+                #ident::bench_gen(&format!("{}::generator", stringify!(#ident)), &mut c);
+                #ident::part1_bench_soln(&format!("{}::part1", stringify!(#ident)), &mut c);
+                #ident::part2_bench_soln(&format!("{}::part2", stringify!(#ident)), &mut c);
+            }
+        })
+        .collect::<TokenStream2>();
 
     let res = quote! {
         #modules

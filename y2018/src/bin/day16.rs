@@ -3,8 +3,8 @@ use hashbrown::HashSet;
 
 aoc_macro::day!();
 
-use y2018::device::{Registers, RawOp};
 use y2018::device::op_codes::*;
+use y2018::device::{RawOp, Registers};
 
 #[derive(Copy, Clone, Debug)]
 struct Sample {
@@ -45,9 +45,10 @@ fn generator((samples_input, raw_program): (&str, &str)) -> Out {
                 });
             }
         } else {
-            let mut it = line.split(' ').filter(|d| !d.is_empty()).map(|d| {
-                d.parse::<u32>().unwrap()
-            });
+            let mut it = line
+                .split(' ')
+                .filter(|d| !d.is_empty())
+                .map(|d| d.parse::<u32>().unwrap());
             op = Some(RawOp {
                 code: it.next().unwrap(),
                 a: it.next().unwrap(),
@@ -58,9 +59,10 @@ fn generator((samples_input, raw_program): (&str, &str)) -> Out {
     }
     let mut program = Vec::new();
     for line in raw_program.trim().lines() {
-        let mut it = line.split(' ').filter(|d| !d.is_empty()).map(|d| {
-            d.parse::<u32>().unwrap()
-        });
+        let mut it = line
+            .split(' ')
+            .filter(|d| !d.is_empty())
+            .map(|d| d.parse::<u32>().unwrap());
         program.push(RawOp {
             code: it.next().unwrap(),
             a: it.next().unwrap(),
@@ -72,22 +74,7 @@ fn generator((samples_input, raw_program): (&str, &str)) -> Out {
 }
 
 static OPS: &[fn(RawOp, &mut Registers)] = &[
-    addr,
-    addi,
-    mulr,
-    muli,
-    banr,
-    bani,
-    borr,
-    bori,
-    setr,
-    seti,
-    gtir,
-    gtri,
-    gtrr,
-    eqir,
-    eqri,
-    eqrr,
+    addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr,
 ];
 
 #[solution(part1,
@@ -115,7 +102,9 @@ fn part1((input, _): Out) -> u32 {
     example = 0,
     expect = 667)]
 fn part2((input, program): Out, example: bool) -> u32 {
-    if example { return 0; }
+    if example {
+        return 0;
+    }
     let mut by_code = vec![vec![]; 16];
     for sample in input {
         by_code[sample.op.code as usize].push(sample);
@@ -130,7 +119,8 @@ fn part2((input, program): Out, example: bool) -> u32 {
         }
     }
     while codes.iter().any(|c| c.len() > 1) {
-        let unique = codes.iter()
+        let unique = codes
+            .iter()
             .filter(|c| c.len() == 1)
             .flat_map(|x| x)
             .cloned()
@@ -154,9 +144,15 @@ fn part2((input, program): Out, example: bool) -> u32 {
     regs[0]
 }
 
-static EXAMPLE: (&str, &str) = ("
+static EXAMPLE: (&str, &str) = (
+    "
 Before: [3, 2, 1, 1]
 9 2 1 2
 After:  [3, 2, 2, 1]
-", "");
-static INPUT: (&str, &str) = (include_str!("day16-samples.txt"), include_str!("day16-program.txt"));
+",
+    "",
+);
+static INPUT: (&str, &str) = (
+    include_str!("day16-samples.txt"),
+    include_str!("day16-program.txt"),
+);

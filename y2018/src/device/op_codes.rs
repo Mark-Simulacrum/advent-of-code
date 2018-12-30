@@ -1,4 +1,4 @@
-use super::{Registers, RawOp};
+use super::{RawOp, Registers};
 
 pub fn addr(raw: RawOp, regs: &mut Registers) {
     regs[raw.c] = regs[raw.a] + regs[raw.b];

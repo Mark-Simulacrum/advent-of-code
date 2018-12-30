@@ -70,7 +70,8 @@ sol_test!(p1_4: part1(generator("^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$")), 1
 
 #[solution(part2,
     example_input = generator(EXAMPLE),
-    example = 0)]
+    example = 0,
+    expect = 8809)]
 fn part2(hir: Out) -> usize {
     let mut map = HashMap::new();
 
