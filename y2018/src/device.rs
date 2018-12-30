@@ -58,3 +58,75 @@ pub struct RawOp {
     pub b: u32,
     pub c: u32,
 }
+
+pub type Op = fn(RawOp, &mut Registers);
+
+pub struct Device {
+    pub ip: usize,
+    pub ip_reg: u32,
+    pub instructions: Vec<(RawOp, Op)>,
+}
+
+impl Device {
+    pub fn step(&mut self, registers: &mut Registers) -> bool {
+        if let Some(&(raw, op)) = self.instructions.get(self.ip) {
+            registers[self.ip_reg] = self.ip as u32;
+            op(raw, registers);
+            self.ip = registers[self.ip_reg] as usize;
+            self.ip += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn load(input: &str) -> Device {
+        let mut ip_reg = None;
+        let mut instructions = Vec::new();
+        for line in input.trim().lines() {
+            if line.starts_with("#ip ") {
+                ip_reg = Some(line[4..].parse::<u32>().unwrap());
+                continue;
+            }
+
+            let op = match &line[..4] {
+                "addi" => op_codes::addi,
+                "addr" => op_codes::addr,
+                "eqir" => op_codes::eqir,
+                "eqri" => op_codes::eqri,
+                "eqrr" => op_codes::eqrr,
+                "gtir" => op_codes::gtir,
+                "gtri" => op_codes::gtri,
+                "gtrr" => op_codes::gtrr,
+                "muli" => op_codes::muli,
+                "mulr" => op_codes::mulr,
+                "seti" => op_codes::seti,
+                "setr" => op_codes::setr,
+                other => unreachable!("unexpected instruction: {:?}", other),
+            };
+
+            let mut it = line[4..]
+                .split(' ')
+                .filter(|n| !n.is_empty())
+                .map(|n| n.parse::<u32>().unwrap());
+
+            let a = it.next().unwrap();
+            let b = it.next().unwrap();
+            let c = it.next().unwrap();
+
+            let raw = RawOp {
+                code: 0, // irrelevant
+                a,
+                b,
+                c,
+            };
+
+            instructions.push((raw, op));
+        }
+        Device {
+            ip: 0,
+            ip_reg: ip_reg.unwrap(),
+            instructions,
+        }
+    }
+}

@@ -2,83 +2,20 @@ use aoc_macro::{generator, solution};
 
 aoc_macro::day!();
 
-use y2018::device::op_codes as ops;
-use y2018::device::{RawOp, Registers};
+use y2018::device::{Device, Registers};
 
 type Out = Device;
 
-type Op = fn(RawOp, &mut Registers);
-
-struct Device {
-    ip: usize,
-    ip_reg: u32,
-    instructions: Vec<(RawOp, Op)>,
-}
-
 #[generator]
 fn generator(input: &str) -> Out {
-    let mut ip_reg = None;
-    let mut instructions = Vec::new();
-    for line in input.trim().lines() {
-        if line.starts_with("#ip ") {
-            ip_reg = Some(line[4..].parse::<u32>().unwrap());
-            continue;
-        }
-
-        let op = match &line[..4] {
-            "addi" => ops::addi,
-            "addr" => ops::addr,
-            "eqir" => ops::eqir,
-            "eqri" => ops::eqri,
-            "eqrr" => ops::eqrr,
-            "gtir" => ops::gtir,
-            "gtri" => ops::gtri,
-            "gtrr" => ops::gtrr,
-            "muli" => ops::muli,
-            "mulr" => ops::mulr,
-            "seti" => ops::seti,
-            "setr" => ops::setr,
-            other => unreachable!("unexpected instruction: {:?}", other),
-        };
-
-        let mut it = line[4..]
-            .split(' ')
-            .filter(|n| !n.is_empty())
-            .map(|n| n.parse::<u32>().unwrap());
-
-        let a = it.next().unwrap();
-        let b = it.next().unwrap();
-        let c = it.next().unwrap();
-
-        let raw = RawOp {
-            code: 0, // irrelevant
-            a,
-            b,
-            c,
-        };
-
-        instructions.push((raw, op));
-    }
-    Device {
-        ip: 0,
-        ip_reg: ip_reg.unwrap(),
-        instructions,
-    }
+    Device::load(input)
 }
 
-impl Device {
-    fn simulate(mut self, r0: u32) -> u32 {
-        let mut registers = Registers::default();
-        registers[0] = r0;
-        while let Some(&(raw, op)) = self.instructions.get(self.ip) {
-            registers[self.ip_reg] = self.ip as u32;
-            op(raw, &mut registers);
-            self.ip = registers[self.ip_reg] as usize;
-            self.ip += 1;
-        }
-
-        registers[0]
-    }
+fn simulate(mut device: Device, r0: u32) -> u32 {
+    let mut registers = Registers::default();
+    registers[0] = r0;
+    while device.step(&mut registers) {}
+    registers[0]
 }
 
 #[solution(part1,
@@ -86,7 +23,7 @@ impl Device {
     example = 6,
     expect = 3224)]
 fn part1(device: Out) -> u32 {
-    device.simulate(0)
+    simulate(device, 0)
 }
 
 #[solution(part2,
@@ -95,7 +32,7 @@ fn part1(device: Out) -> u32 {
     expect = 32188416)]
 fn part2(device: Out, example: bool) -> u32 {
     if example {
-        return device.simulate(1);
+        return simulate(device, 1);
     }
     let mut r0 = 0;
     let r3 = 10551408;
